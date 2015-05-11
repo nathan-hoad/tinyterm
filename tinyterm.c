@@ -32,7 +32,6 @@
 #include <signal.h>
 #include "config.h"
 
-static gboolean url_select_mode = FALSE;
 static int child_pid = 0;   // needs to be global for signal_handler to work
 
 /* spawn xdg-open and pass text as argument */
@@ -92,23 +91,6 @@ window_title_cb(VteTerminal* vte)
 static gboolean
 key_press_cb(VteTerminal* vte, GdkEventKey* event)
 {
-    if (url_select_mode) {
-        switch (gdk_keyval_to_upper(event->keyval)) {
-            case TINYTERM_KEY_URL_NEXT:
-                vte_terminal_search_find_next(vte);
-                return TRUE;
-            case TINYTERM_KEY_URL_PREV:
-                vte_terminal_search_find_previous(vte);
-                return TRUE;
-            case GDK_Return:
-                xdg_open_selection(vte);
-            case GDK_Escape:
-                vte_terminal_select_none(vte);
-                url_select_mode = FALSE;
-                return TRUE;
-        }
-        return TRUE;
-    }
     if ((event->state & (TINYTERM_MODIFIER)) == (TINYTERM_MODIFIER)) {
         switch (gdk_keyval_to_upper(event->keyval)) {
             case TINYTERM_KEY_COPY:
@@ -120,20 +102,8 @@ key_press_cb(VteTerminal* vte, GdkEventKey* event)
             case TINYTERM_KEY_OPEN:
                 xdg_open_selection(vte);
                 return TRUE;
-            case TINYTERM_KEY_URL_INIT:
-                url_select_mode = vte_terminal_search_find_previous(vte);
-                return TRUE;
         }
     }
-    return FALSE;
-}
-
-/* callback to block mouse when in url-select mode */
-static gboolean
-button_press_cb(VteTerminal* vte, GdkEventButton* event)
-{
-    if (url_select_mode)
-        return TRUE;
     return FALSE;
 }
 
@@ -320,9 +290,6 @@ main (int argc, char* argv[])
     g_signal_connect(window, "focus-in-event",  G_CALLBACK (window_focus_cb), NULL);
     g_signal_connect(window, "focus-out-event", G_CALLBACK (window_focus_cb), NULL);
     #endif // TINYTERM_URGENT_ON_BELL
-    #ifdef TINYTERM_URL_BLOCK_MOUSE
-    g_signal_connect(vte, "button-press-event", G_CALLBACK (button_press_cb), NULL);
-    #endif // TINYTERM_URL_BLOCK_MOUSE
     #ifdef TINYTERM_DYNAMIC_WINDOW_TITLE
     if (!title)
         g_signal_connect(vte, "window-title-changed", G_CALLBACK (window_title_cb), NULL);

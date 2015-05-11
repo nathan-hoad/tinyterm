@@ -29,7 +29,6 @@
 
 #define TINYTERM_DYNAMIC_WINDOW_TITLE   // uncomment to enable window_title_cb
 #define TINYTERM_URGENT_ON_BELL         // uncomment to enable window_urgency_hint_cb
-#define TINYTERM_URL_BLOCK_MOUSE        // uncomment to block mouse (button-press events) in url-select mode
 //#define TINYTERM_SCROLLBAR_VISIBLE    // uncomment to show scrollbar
 #define TINYTERM_SCROLLBACK_LINES   10000
 #define TINYTERM_SEARCH_WRAP_AROUND TRUE
@@ -110,9 +109,6 @@
 #define TINYTERM_KEY_COPY       GDK_C
 #define TINYTERM_KEY_PASTE      GDK_V
 #define TINYTERM_KEY_OPEN       GDK_O   // pass selected text to xdg-open
-#define TINYTERM_KEY_URL_INIT   GDK_U
-#define TINYTERM_KEY_URL_NEXT   GDK_J   // only in url select mode, not matched against modifier
-#define TINYTERM_KEY_URL_PREV   GDK_K   // only in url select mode, not matched against modifier
 
 /* Regular expression matching urls */
 #define SPECIAL_CHARS   "[[:alnum:]\\Q+-_,?;.:/!%$^*&~#=()\\E]"
