@@ -10,7 +10,7 @@ CC := $(CC) -std=c99
 base_CFLAGS = -Wall -Wextra -pedantic -O2 -g
 base_LIBS = -lm
 
-pkgs = vte
+pkgs = vte-2.91
 pkgs_CFLAGS = $(shell pkg-config --cflags $(pkgs))
 pkgs_LIBS = $(shell pkg-config --libs $(pkgs))
 

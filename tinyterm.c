@@ -38,7 +38,7 @@ static int child_pid = 0;   // needs to be global for signal_handler to work
 
 /* callback to set window urgency hint on beep events */
 static void
-window_urgency_hint_cb(VteTerminal* vte)
+window_urgency_hint_cb(VteTerminal* vte, gpointer user_data)
 {
     gtk_window_set_urgency_hint(GTK_WINDOW (gtk_widget_get_toplevel(GTK_WIDGET (vte))), TRUE);
 }
@@ -89,42 +89,17 @@ key_press_cb(VteTerminal* vte, GdkEventKey* event)
 static void
 vte_config(VteTerminal* vte)
 {
-    GdkColor color_fg, color_bg;
-    GdkColor color_palette[16];
     GRegex* regex = g_regex_new(url_regex, G_REGEX_CASELESS, G_REGEX_MATCH_NOTEMPTY, NULL);
 
-    vte_terminal_search_set_gregex(vte, regex);
+    vte_terminal_search_set_gregex(vte, regex, G_REGEX_MATCH_NOTEMPTY);
     vte_terminal_search_set_wrap_around     (vte, TINYTERM_SEARCH_WRAP_AROUND);
     vte_terminal_set_audible_bell           (vte, TINYTERM_AUDIBLE_BELL);
-    vte_terminal_set_visible_bell           (vte, TINYTERM_VISIBLE_BELL);
     vte_terminal_set_cursor_shape           (vte, TINYTERM_CURSOR_SHAPE);
     vte_terminal_set_cursor_blink_mode      (vte, TINYTERM_CURSOR_BLINK);
-    vte_terminal_set_word_chars             (vte, TINYTERM_WORD_CHARS);
+    vte_terminal_set_word_char_exceptions   (vte, TINYTERM_WORD_CHARS);
     vte_terminal_set_scrollback_lines       (vte, TINYTERM_SCROLLBACK_LINES);
     PangoFontDescription *font = pango_font_description_from_string(TINYTERM_FONT);
     vte_terminal_set_font(vte, font);
-
-    /* init colors */
-    gdk_color_parse(TINYTERM_COLOR_FOREGROUND, &color_fg);
-    gdk_color_parse(TINYTERM_COLOR_BACKGROUND, &color_bg);
-    gdk_color_parse(TINYTERM_COLOR0,  &color_palette[0]);
-    gdk_color_parse(TINYTERM_COLOR1,  &color_palette[1]);
-    gdk_color_parse(TINYTERM_COLOR2,  &color_palette[2]);
-    gdk_color_parse(TINYTERM_COLOR3,  &color_palette[3]);
-    gdk_color_parse(TINYTERM_COLOR4,  &color_palette[4]);
-    gdk_color_parse(TINYTERM_COLOR5,  &color_palette[5]);
-    gdk_color_parse(TINYTERM_COLOR6,  &color_palette[6]);
-    gdk_color_parse(TINYTERM_COLOR7,  &color_palette[7]);
-    gdk_color_parse(TINYTERM_COLOR8,  &color_palette[8]);
-    gdk_color_parse(TINYTERM_COLOR9,  &color_palette[9]);
-    gdk_color_parse(TINYTERM_COLOR10, &color_palette[10]);
-    gdk_color_parse(TINYTERM_COLOR11, &color_palette[11]);
-    gdk_color_parse(TINYTERM_COLOR12, &color_palette[12]);
-    gdk_color_parse(TINYTERM_COLOR13, &color_palette[13]);
-    gdk_color_parse(TINYTERM_COLOR14, &color_palette[14]);
-    gdk_color_parse(TINYTERM_COLOR15, &color_palette[15]);
-
-    vte_terminal_set_colors(vte, &color_fg, &color_bg, &color_palette, 16);
 }
 
 static void
@@ -144,14 +119,13 @@ vte_spawn(VteTerminal* vte, char* working_directory, char* command, char** envir
     }
 
     /* Create pty object */
-    VtePty* pty = vte_terminal_pty_new(vte, VTE_PTY_NO_HELPER, &error);
+    VtePty* pty = vte_terminal_pty_new_sync(vte, VTE_PTY_NO_HELPER, NULL, &error);
     if (error) {
         g_printerr("Failed to create pty: %s\n", error->message);
         g_error_free(error);
         exit(EXIT_FAILURE);
     }
-    vte_pty_set_term(pty, TINYTERM_TERMINFO);
-    vte_terminal_set_pty_object(vte, pty);
+    vte_terminal_set_pty(vte, pty);
 
     /* Spawn default shell (or specified command) */
     g_spawn_async(working_directory, command_argv, environment,
@@ -171,9 +145,8 @@ vte_spawn(VteTerminal* vte, char* working_directory, char* command, char** envir
 
 /* callback to exit TinyTerm with exit status of child process */
 static void
-vte_exit_cb(VteTerminal* vte)
+vte_exit_cb(VteTerminal* vte, gint status, gpointer user_data)
 {
-    int status = vte_terminal_get_child_exit_status(vte);
     gtk_main_quit();
     exit(WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE);
 }
@@ -276,12 +249,12 @@ main (int argc, char* argv[])
     #endif // TINYTERM_DYNAMIC_WINDOW_TITLE
 
     /* Apply geometry hints to handle terminal resizing */
-    geo_hints.base_width  = vte->char_width;
-    geo_hints.base_height = vte->char_height;
-    geo_hints.min_width   = vte->char_width;
-    geo_hints.min_height  = vte->char_height;
-    geo_hints.width_inc   = vte->char_width;
-    geo_hints.height_inc  = vte->char_height;
+    geo_hints.base_width  = vte_terminal_get_char_width(vte);
+    geo_hints.base_height = vte_terminal_get_char_height(vte);
+    geo_hints.min_width   = vte_terminal_get_char_width(vte);
+    geo_hints.min_height  = vte_terminal_get_char_height(vte);
+    geo_hints.width_inc   = vte_terminal_get_char_width(vte);
+    geo_hints.height_inc  = vte_terminal_get_char_height(vte);
     gtk_window_set_geometry_hints(GTK_WINDOW (window), vte_widget, &geo_hints,
                                   GDK_HINT_RESIZE_INC | GDK_HINT_MIN_SIZE | GDK_HINT_BASE_SIZE);
 
