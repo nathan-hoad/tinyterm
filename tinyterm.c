@@ -34,7 +34,7 @@
 
 #include "config.h"
 
-static int child_pid = 0;   // needs to be global for signal_handler to work
+static GApplication *_application = NULL;   // needs to be global for signal_handler to work
 
 /* callback to set window urgency hint on beep events */
 static void
@@ -127,6 +127,8 @@ vte_spawn(VteTerminal* vte, char* working_directory, char* command, char** envir
     }
     vte_terminal_set_pty(vte, pty);
 
+    int child_pid;
+
     /* Spawn default shell (or specified command) */
     g_spawn_async(working_directory, command_argv, environment,
                   (G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH | G_SPAWN_LEAVE_DESCRIPTORS_OPEN),  // flags from GSpawnFlags
@@ -145,10 +147,29 @@ vte_spawn(VteTerminal* vte, char* working_directory, char* command, char** envir
 
 /* callback to exit TinyTerm with exit status of child process */
 static void
-vte_exit_cb(VteTerminal* vte, gint status, gpointer user_data)
+window_close(GtkWindow* window, gint status, gpointer user_data)
 {
-    gtk_main_quit();
-    exit(WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE);
+    GtkApplication *app = (GtkApplication*)user_data;
+
+    int count = 0;
+    GList *windows = gtk_application_get_windows(app);
+
+    while (windows != NULL) {
+        windows = windows->next;
+        count++;
+    }
+
+    if (count == 1) {
+        g_application_quit(G_APPLICATION(app));
+    }
+}
+
+static void
+vte_exit_cb(VteTerminal *vte, gint status, gpointer user_data)
+{
+    GtkWindow *window = (GtkWindow*)user_data;
+
+    gtk_widget_destroy(GTK_WIDGET(window));
 }
 
 static void
@@ -184,17 +205,13 @@ parse_arguments(int argc, char* argv[], char** command, char** directory, gboole
     }
 }
 
-/* UNIX signal handler */
 static void
 signal_handler(int signal)
 {
-    if (child_pid != 0)
-        kill(child_pid, SIGHUP);
-    exit(signal);
+    g_application_quit(_application);
 }
 
-int
-main (int argc, char* argv[])
+void new_window(GtkApplication *app, gchar **argv, gint argc)
 {
     GtkWidget* window;
     GtkWidget* box;
@@ -210,12 +227,12 @@ main (int argc, char* argv[])
     char* name = NULL;
     char* title = NULL;
 
-    gtk_init(&argc, &argv);
     parse_arguments(argc, argv, &command, &directory, &keep, &name, &title);
 
     /* Create window */
-    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    g_signal_connect(window, "delete-event", gtk_main_quit, NULL);
+    window = gtk_application_window_new(GTK_APPLICATION(app));
+    g_signal_connect(window, "delete-event", window_close, app);
+    g_object_set(gtk_settings_get_default (), "gtk-application-prefer-dark-theme", TRUE, NULL);
     gtk_window_set_wmclass(GTK_WINDOW (window), name ? name : "tinyterm", "TinyTerm");
     gtk_window_set_title(GTK_WINDOW (window), title ? title : "TinyTerm");
 
@@ -236,7 +253,7 @@ main (int argc, char* argv[])
     gtk_box_pack_start(GTK_BOX (box), vte_widget, TRUE, TRUE, 0);
     VteTerminal* vte = VTE_TERMINAL (vte_widget);
     if (!keep)
-        g_signal_connect(vte, "child-exited", G_CALLBACK (vte_exit_cb), NULL);
+        g_signal_connect(vte, "child-exited", G_CALLBACK (vte_exit_cb), window);
     g_signal_connect(vte, "key-press-event", G_CALLBACK (key_press_cb), NULL);
     #ifdef TINYTERM_URGENT_ON_BELL
     g_signal_connect(vte, "beep", G_CALLBACK (window_urgency_hint_cb), NULL);
@@ -261,11 +278,6 @@ main (int argc, char* argv[])
     vte_config(vte);
     vte_spawn(vte, directory, command, NULL);
 
-    /* register signal handler */
-    signal(SIGHUP, signal_handler);
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-
     /* cleanup */
     g_free(command);
     g_free(directory);
@@ -274,7 +286,40 @@ main (int argc, char* argv[])
 
     /* Show widgets and run main loop */
     gtk_widget_show_all(window);
-    gtk_main();
-
-    return EXIT_SUCCESS;
 }
+
+static void
+activate(GApplication *app, gpointer user_data)
+{
+    new_window(GTK_APPLICATION(app), NULL, 0);
+}
+
+static void
+command_line(GApplication *app, GApplicationCommandLine *command_line, gpointer user_data)
+{
+    gchar **argc;
+    gint argv;
+    argc = g_application_command_line_get_arguments(command_line, &argv);
+    new_window(GTK_APPLICATION(app), argc, argv);
+}
+
+int
+main (int argc, char* argv[])
+{
+    gtk_init(&argc, &argv);
+    /* register signal handler */
+    signal(SIGHUP, signal_handler);
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
+    GtkApplication *app;
+    int status;
+    app = gtk_application_new("org.nhoad.tinyterm", G_APPLICATION_HANDLES_COMMAND_LINE);
+    _application = app;
+    g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
+    g_signal_connect(app, "command-line", G_CALLBACK(command_line), NULL);
+    status = g_application_run(G_APPLICATION(app), argc, argv);
+    g_object_unref(app);
+    return status;
+}
+
