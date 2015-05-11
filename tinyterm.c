@@ -25,45 +25,16 @@
  */
 
 #include <stdlib.h>
-#include <glib.h>
+#include <signal.h>
 #include <sys/wait.h>
+
+#include <glib.h>
 #include <gdk/gdkkeysyms.h>
 #include <vte/vte.h>
-#include <signal.h>
+
 #include "config.h"
 
 static int child_pid = 0;   // needs to be global for signal_handler to work
-
-/* spawn xdg-open and pass text as argument */
-static void
-xdg_open(const char* text)
-{
-    GError* error = NULL;
-    char* command = g_strconcat("xdg-open ", text, NULL);
-    g_spawn_command_line_async(command, &error);
-    if (error) {
-        g_printerr("xdg-open: %s\n", error->message);
-        g_error_free(error);
-    }
-    g_free(command);
-}
-
-/* callback to receive data from GtkClipboard */
-static void
-xdg_open_selection_cb(GtkClipboard* clipboard, const char* string, gpointer data)
-{
-    xdg_open(string);
-}
-
-/* pass selected text to xdg-open */
-static void
-xdg_open_selection(GtkWidget* terminal)
-{
-    GdkDisplay* display = gtk_widget_get_display(terminal);;
-    GtkClipboard* clipboard = gtk_clipboard_get_for_display(display, GDK_SELECTION_PRIMARY);
-    vte_terminal_copy_primary(VTE_TERMINAL (terminal));
-    gtk_clipboard_request_text(clipboard, xdg_open_selection_cb, NULL);
-}
 
 /* callback to set window urgency hint on beep events */
 static void
@@ -93,15 +64,23 @@ key_press_cb(VteTerminal* vte, GdkEventKey* event)
 {
     if ((event->state & (TINYTERM_MODIFIER)) == (TINYTERM_MODIFIER)) {
         switch (gdk_keyval_to_upper(event->keyval)) {
-            case TINYTERM_KEY_COPY:
-                vte_terminal_copy_clipboard(vte);
+            case TINYTERM_KEY_FONTSIZE_INCREASE:
+            {
+                const PangoFontDescription *font = vte_terminal_get_font(vte);
+                pango_font_description_set_size(font, (pango_font_description_get_size(font) / PANGO_SCALE + 1) * PANGO_SCALE);
+                vte_terminal_set_font(vte, font);
                 return TRUE;
-            case TINYTERM_KEY_PASTE:
-                vte_terminal_paste_clipboard(vte);
+            }
+            case TINYTERM_KEY_FONTSIZE_DECREASE:
+            {
+                const PangoFontDescription *font = vte_terminal_get_font(vte);
+                const gint size = pango_font_description_get_size(font) / PANGO_SCALE - 1;
+                if (size > 0) {
+                    pango_font_description_set_size(font, size * PANGO_SCALE);
+                    vte_terminal_set_font(vte, font);
+                }
                 return TRUE;
-            case TINYTERM_KEY_OPEN:
-                xdg_open_selection(vte);
-                return TRUE;
+            }
         }
     }
     return FALSE;
@@ -122,7 +101,8 @@ vte_config(VteTerminal* vte)
     vte_terminal_set_cursor_blink_mode      (vte, TINYTERM_CURSOR_BLINK);
     vte_terminal_set_word_chars             (vte, TINYTERM_WORD_CHARS);
     vte_terminal_set_scrollback_lines       (vte, TINYTERM_SCROLLBACK_LINES);
-    vte_terminal_set_font_from_string_full  (vte, TINYTERM_FONT, TINYTERM_ANTIALIAS);
+    PangoFontDescription *font = pango_font_description_from_string(TINYTERM_FONT);
+    vte_terminal_set_font(vte, font);
 
     /* init colors */
     gdk_color_parse(TINYTERM_COLOR_FOREGROUND, &color_fg);

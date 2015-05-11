@@ -1,6 +1,7 @@
 /*
  * MIT/X Consortium License
  *
+ * © 2015 Nathan Hoad
  * © 2013 Jakub Klinkovský
  * © 2009 Sebastian Linke
  *
@@ -35,9 +36,6 @@
 #define TINYTERM_AUDIBLE_BELL   FALSE
 #define TINYTERM_VISIBLE_BELL   FALSE
 #define TINYTERM_FONT           "monospace 10"
-
-/* One of VTE_ANTI_ALIAS_USE_DEFAULT, VTE_ANTI_ALIAS_FORCE_ENABLE, VTE_ANTI_ALIAS_FORCE_DISABLE */
-#define TINYTERM_ANTIALIAS      VTE_ANTI_ALIAS_FORCE_ENABLE
 
 /* One of VTE_CURSOR_SHAPE_BLOCK, VTE_CURSOR_SHAPE_IBEAM, VTE_CURSOR_SHAPE_UNDERLINE */
 #define TINYTERM_CURSOR_SHAPE   VTE_CURSOR_SHAPE_BLOCK
@@ -105,10 +103,9 @@
 //#define TINYTERM_COLOR15     "#ffffff"
 
 /* Keyboard shortcuts */
-#define TINYTERM_MODIFIER       GDK_CONTROL_MASK | GDK_SHIFT_MASK
-#define TINYTERM_KEY_COPY       GDK_C
-#define TINYTERM_KEY_PASTE      GDK_V
-#define TINYTERM_KEY_OPEN       GDK_O   // pass selected text to xdg-open
+#define TINYTERM_MODIFIER       GDK_CONTROL_MASK
+#define TINYTERM_KEY_FONTSIZE_INCREASE       GDK_KEY_Up
+#define TINYTERM_KEY_FONTSIZE_DECREASE       GDK_KEY_Down
 
 /* Regular expression matching urls */
 #define SPECIAL_CHARS   "[[:alnum:]\\Q+-_,?;.:/!%$^*&~#=()\\E]"
