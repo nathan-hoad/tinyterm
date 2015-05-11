@@ -228,7 +228,7 @@ main (int argc, char* argv[])
         gtk_window_set_icon(GTK_WINDOW (window), icon);
 
     /* Create main box */
-    box = gtk_hbox_new(FALSE, 0);
+    box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_container_add(GTK_CONTAINER (window), box);
 
     /* Create vte terminal widget */
