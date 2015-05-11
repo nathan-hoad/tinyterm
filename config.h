@@ -30,7 +30,6 @@
 
 #define TINYTERM_DYNAMIC_WINDOW_TITLE   // uncomment to enable window_title_cb
 #define TINYTERM_URGENT_ON_BELL         // uncomment to enable window_urgency_hint_cb
-//#define TINYTERM_SCROLLBAR_VISIBLE    // uncomment to show scrollbar
 #define TINYTERM_SCROLLBACK_LINES   10000
 #define TINYTERM_SEARCH_WRAP_AROUND TRUE
 #define TINYTERM_AUDIBLE_BELL   FALSE

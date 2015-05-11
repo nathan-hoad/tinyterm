@@ -258,13 +258,6 @@ main (int argc, char* argv[])
     gtk_window_set_geometry_hints(GTK_WINDOW (window), vte_widget, &geo_hints,
                                   GDK_HINT_RESIZE_INC | GDK_HINT_MIN_SIZE | GDK_HINT_BASE_SIZE);
 
-    /* Create scrollbar */
-    #ifdef TINYTERM_SCROLLBAR_VISIBLE
-    GtkWidget* scrollbar;
-    scrollbar = gtk_vscrollbar_new(vte->adjustment);
-    gtk_box_pack_start(GTK_BOX (box), scrollbar, FALSE, FALSE, 0);
-    #endif // TINYTERM_SCROLLBAR_VISIBLE
-
     vte_config(vte);
     vte_spawn(vte, directory, command, NULL);
 
