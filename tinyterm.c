@@ -231,7 +231,7 @@ void new_window(GtkApplication *app, gchar **argv, gint argc)
 
     /* Create window */
     window = gtk_application_window_new(GTK_APPLICATION(app));
-    g_signal_connect(window, "delete-event", window_close, app);
+    g_signal_connect(window, "delete-event", G_CALLBACK(window_close), app);
     g_object_set(gtk_settings_get_default (), "gtk-application-prefer-dark-theme", TRUE, NULL);
     gtk_window_set_wmclass(GTK_WINDOW (window), name ? name : "tinyterm", "TinyTerm");
     gtk_window_set_title(GTK_WINDOW (window), title ? title : "TinyTerm");
@@ -256,7 +256,7 @@ void new_window(GtkApplication *app, gchar **argv, gint argc)
         g_signal_connect(vte, "child-exited", G_CALLBACK (vte_exit_cb), window);
     g_signal_connect(vte, "key-press-event", G_CALLBACK (key_press_cb), NULL);
     #ifdef TINYTERM_URGENT_ON_BELL
-    g_signal_connect(vte, "beep", G_CALLBACK (window_urgency_hint_cb), NULL);
+    g_signal_connect(vte, "bell", G_CALLBACK (window_urgency_hint_cb), NULL);
     g_signal_connect(window, "focus-in-event",  G_CALLBACK (window_focus_cb), NULL);
     g_signal_connect(window, "focus-out-event", G_CALLBACK (window_focus_cb), NULL);
     #endif // TINYTERM_URGENT_ON_BELL
@@ -315,7 +315,7 @@ main (int argc, char* argv[])
     GtkApplication *app;
     int status;
     app = gtk_application_new("org.nhoad.tinyterm", G_APPLICATION_HANDLES_COMMAND_LINE);
-    _application = app;
+    _application = G_APPLICATION(app);
     g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
     g_signal_connect(app, "command-line", G_CALLBACK(command_line), NULL);
     status = g_application_run(G_APPLICATION(app), argc, argv);
