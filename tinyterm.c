@@ -232,7 +232,7 @@ void new_window(GtkApplication *app, gchar **argv, gint argc)
     /* Create window */
     window = gtk_application_window_new(GTK_APPLICATION(app));
     g_signal_connect(window, "delete-event", G_CALLBACK(window_close), app);
-    g_object_set(gtk_settings_get_default (), "gtk-application-prefer-dark-theme", TRUE, NULL);
+
     gtk_window_set_wmclass(GTK_WINDOW (window), name ? name : "tinyterm", "TinyTerm");
     gtk_window_set_title(GTK_WINDOW (window), title ? title : "TinyTerm");
 
@@ -311,6 +311,14 @@ main (int argc, char* argv[])
     signal(SIGHUP, signal_handler);
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
+
+    GtkCssProvider *provider = gtk_css_provider_new();
+
+    gtk_css_provider_load_from_data(provider, TINYTERM_STYLE, strlen(TINYTERM_STYLE), NULL);
+
+    gtk_style_context_add_provider_for_screen(
+        gdk_screen_get_default(), provider,
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     GtkApplication *app;
     int status;
