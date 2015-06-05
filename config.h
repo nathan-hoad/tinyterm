@@ -34,8 +34,46 @@
 #define TINYTERM_SEARCH_WRAP_AROUND TRUE
 #define TINYTERM_AUDIBLE_BELL   FALSE
 #define TINYTERM_VISIBLE_BELL   FALSE
-#define TINYTERM_FONT           "Terminus 9"
+#define TINYTERM_FONT           "Anonymous Pro 9"
 #define TINYTERM_STYLE "GtkWindow { background: black; }"
+
+
+#define base00 "#000000"
+#define base01 "#3a3432"
+#define base02 "#4a4543"
+#define base03 "#5c5855"
+#define base04 "#807d7c"
+#define base05 "#a5a2a2"
+#define base06 "#d6d5d4"
+#define base07 "#f7f7f7"
+#define base08 "#db2d20"
+#define base09 "#e8bbd0"
+#define base0A "#fded02"
+#define base0B "#01a252"
+#define base0C "#b5e4f4"
+#define base0D "#01a0e4"
+#define base0E "#a16a94"
+#define base0F "#cdab53"
+
+#define TINYTERM_COLOR_FOREGROUND "#fff"
+#define TINYTERM_COLOR_BACKGROUND base00
+#define TINYTERM_COLOR00 base00
+#define TINYTERM_COLOR01 base08
+#define TINYTERM_COLOR02 base0B
+#define TINYTERM_COLOR03 base0A
+#define TINYTERM_COLOR04 base0D
+#define TINYTERM_COLOR05 base0E
+#define TINYTERM_COLOR06 base0A
+#define TINYTERM_COLOR07 base05
+
+#define TINYTERM_COLOR08 base00
+#define TINYTERM_COLOR09 base08
+#define TINYTERM_COLOR0A base0B
+#define TINYTERM_COLOR0B base0A
+#define TINYTERM_COLOR0C base0D
+#define TINYTERM_COLOR0D base0E
+#define TINYTERM_COLOR0E base0A
+#define TINYTERM_COLOR0F base05
 
 /* One of VTE_CURSOR_SHAPE_BLOCK, VTE_CURSOR_SHAPE_IBEAM, VTE_CURSOR_SHAPE_UNDERLINE */
 #define TINYTERM_CURSOR_SHAPE   VTE_CURSOR_SHAPE_BLOCK
@@ -45,62 +83,6 @@
 
 /* Selection behavior for double-clicks */
 #define TINYTERM_WORD_CHARS "-A-Za-z0-9:./?%&#_=+@~"
-
-/* Custom color scheme */
-#define TINYTERM_COLOR_BACKGROUND   "#000000"
-#define TINYTERM_COLOR_FOREGROUND   "#bebebe"
-/* black */
-#define TINYTERM_COLOR0     "#000000"
-#define TINYTERM_COLOR8     "#4d4d4d"
-/* red */
-#define TINYTERM_COLOR1     "#B22222"
-#define TINYTERM_COLOR9     "#ED2939"
-/* green */
-#define TINYTERM_COLOR2     "#00a000"
-#define TINYTERM_COLOR10    "#32cd32"
-/* yellow */
-#define TINYTERM_COLOR3     "#cdcd00"
-#define TINYTERM_COLOR11    "#ffff00"
-/* blue */
-#define TINYTERM_COLOR4     "#2346AE"
-#define TINYTERM_COLOR12    "#2b65ec"
-/* magenta */
-#define TINYTERM_COLOR5     "#AA00AA"
-#define TINYTERM_COLOR13    "#C154C1"
-/* cyan */
-#define TINYTERM_COLOR6     "#58C6ED"
-#define TINYTERM_COLOR14    "#00DFFF"
-/* white */
-#define TINYTERM_COLOR7     "#e5e5e5"
-#define TINYTERM_COLOR15    "#ffffff"
-
-///* Default color scheme - matches default colors of urxvt */
-//#define TINYTERM_COLOR_BACKGROUND   "#000000"
-//#define TINYTERM_COLOR_FOREGROUND   "#bebebe"
-///* black */
-//#define TINYTERM_COLOR0      "#000000"
-//#define TINYTERM_COLOR8      "#4d4d4d"
-///* red */
-//#define TINYTERM_COLOR1      "#cd0000"
-//#define TINYTERM_COLOR9      "#ff0000"
-///* green */
-//#define TINYTERM_COLOR2      "#00cd00"
-//#define TINYTERM_COLOR10     "#00ff00"
-///* yellow */
-//#define TINYTERM_COLOR3      "#cdcd00"
-//#define TINYTERM_COLOR11     "#ffff00"
-///* blue */
-//#define TINYTERM_COLOR4      "#0000cd"
-//#define TINYTERM_COLOR12     "#2b65ec"
-///* magenta */
-//#define TINYTERM_COLOR5      "#cd00cd"
-//#define TINYTERM_COLOR13     "#ff00ff"
-///* cyan */
-//#define TINYTERM_COLOR6      "#00cdcd"
-//#define TINYTERM_COLOR14     "#00ffff"
-///* white */
-//#define TINYTERM_COLOR7      "#e5e5e5"
-//#define TINYTERM_COLOR15     "#ffffff"
 
 /* Keyboard shortcuts */
 #define TINYTERM_MODIFIER       GDK_CONTROL_MASK

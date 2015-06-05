@@ -100,6 +100,29 @@ vte_config(VteTerminal* vte)
     vte_terminal_set_scrollback_lines       (vte, TINYTERM_SCROLLBACK_LINES);
     PangoFontDescription *font = pango_font_description_from_string(TINYTERM_FONT);
     vte_terminal_set_font(vte, font);
+
+    GdkRGBA color_fg, color_bg;
+    GdkRGBA color_palette[16];
+    gdk_rgba_parse(&color_fg, TINYTERM_COLOR_FOREGROUND);
+    gdk_rgba_parse(&color_bg, TINYTERM_COLOR_BACKGROUND);
+    gdk_rgba_parse(&color_palette[0], TINYTERM_COLOR00);
+    gdk_rgba_parse(&color_palette[1], TINYTERM_COLOR01);
+    gdk_rgba_parse(&color_palette[2], TINYTERM_COLOR02);
+    gdk_rgba_parse(&color_palette[3], TINYTERM_COLOR03);
+    gdk_rgba_parse(&color_palette[4], TINYTERM_COLOR04);
+    gdk_rgba_parse(&color_palette[5], TINYTERM_COLOR05);
+    gdk_rgba_parse(&color_palette[6], TINYTERM_COLOR06);
+    gdk_rgba_parse(&color_palette[7], TINYTERM_COLOR07);
+    gdk_rgba_parse(&color_palette[8], TINYTERM_COLOR08);
+    gdk_rgba_parse(&color_palette[9], TINYTERM_COLOR09);
+    gdk_rgba_parse(&color_palette[10], TINYTERM_COLOR0A);
+    gdk_rgba_parse(&color_palette[11], TINYTERM_COLOR0B);
+    gdk_rgba_parse(&color_palette[12], TINYTERM_COLOR0C);
+    gdk_rgba_parse(&color_palette[13], TINYTERM_COLOR0D);
+    gdk_rgba_parse(&color_palette[14], TINYTERM_COLOR0E);
+    gdk_rgba_parse(&color_palette[15], TINYTERM_COLOR0F);
+
+    vte_terminal_set_colors(vte, &color_fg, &color_bg, &color_palette, 16);
 }
 
 static void
