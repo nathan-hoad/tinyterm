@@ -1,11 +1,12 @@
 tinyterm
 ========
 
-Fork of https://github.com/lahwaacz/tinyterm, which is a fork of https://code.google.com/p/tinyterm/
+Fork of https://github.com/nathan-hoad/tinyterm, which is a fork of https://github.com/lahwaacz/tinyterm, which is a fork of https://code.google.com/p/tinyterm/
 
 - shortcuts for increasing/decreasing font size
 - runs against vte3 for true color support
 - runs a single instance to save memory, like urxvtd/urxvtc.
+- changed config to have gruvbox colorscheme
 
 Dependencies
 ------------

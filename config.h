@@ -34,46 +34,28 @@
 #define TINYTERM_SEARCH_WRAP_AROUND TRUE
 #define TINYTERM_AUDIBLE_BELL   FALSE
 #define TINYTERM_VISIBLE_BELL   FALSE
-#define TINYTERM_FONT           "Anonymous Pro 9"
+#define TINYTERM_FONT           "Inconsolata 12"
 #define TINYTERM_STYLE "GtkWindow { background: black; }"
 
+#define TINYTERM_COLOR_BACKGROUND "#282828"
+#define TINYTERM_COLOR_FOREGROUND "#ebdbb2"
+#define TINYTERM_COLOR00 "#282828"
+#define TINYTERM_COLOR01 "#cc241d"
+#define TINYTERM_COLOR02 "#98971a"
+#define TINYTERM_COLOR03 "#d79921"
+#define TINYTERM_COLOR04 "#458588"
+#define TINYTERM_COLOR05 "#b16286"
+#define TINYTERM_COLOR06 "#689d6a"
+#define TINYTERM_COLOR07 "#a89984"
 
-#define base00 "#000000"
-#define base01 "#3a3432"
-#define base02 "#4a4543"
-#define base03 "#5c5855"
-#define base04 "#807d7c"
-#define base05 "#a5a2a2"
-#define base06 "#d6d5d4"
-#define base07 "#f7f7f7"
-#define base08 "#db2d20"
-#define base09 "#e8bbd0"
-#define base0A "#fded02"
-#define base0B "#01a252"
-#define base0C "#b5e4f4"
-#define base0D "#01a0e4"
-#define base0E "#a16a94"
-#define base0F "#cdab53"
-
-#define TINYTERM_COLOR_FOREGROUND "#fff"
-#define TINYTERM_COLOR_BACKGROUND base00
-#define TINYTERM_COLOR00 base00
-#define TINYTERM_COLOR01 base08
-#define TINYTERM_COLOR02 base0B
-#define TINYTERM_COLOR03 base0A
-#define TINYTERM_COLOR04 base0D
-#define TINYTERM_COLOR05 base0E
-#define TINYTERM_COLOR06 base0A
-#define TINYTERM_COLOR07 base05
-
-#define TINYTERM_COLOR08 base00
-#define TINYTERM_COLOR09 base08
-#define TINYTERM_COLOR0A base0B
-#define TINYTERM_COLOR0B base0A
-#define TINYTERM_COLOR0C base0D
-#define TINYTERM_COLOR0D base0E
-#define TINYTERM_COLOR0E base0A
-#define TINYTERM_COLOR0F base05
+#define TINYTERM_COLOR08 "#928374"
+#define TINYTERM_COLOR09 "#fb4934"
+#define TINYTERM_COLOR0A "#b8bb26"
+#define TINYTERM_COLOR0B "#fabd2f"
+#define TINYTERM_COLOR0C "#83a598"
+#define TINYTERM_COLOR0D "#d3869b"
+#define TINYTERM_COLOR0E "#8ec07c"
+#define TINYTERM_COLOR0F "#ebdbb2"
 
 /* One of VTE_CURSOR_SHAPE_BLOCK, VTE_CURSOR_SHAPE_IBEAM, VTE_CURSOR_SHAPE_UNDERLINE */
 #define TINYTERM_CURSOR_SHAPE   VTE_CURSOR_SHAPE_BLOCK
