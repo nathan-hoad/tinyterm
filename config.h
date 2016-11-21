@@ -67,9 +67,9 @@
 #define TINYTERM_WORD_CHARS "-A-Za-z0-9:./?%&#_=+@~"
 
 /* Keyboard shortcuts */
-#define TINYTERM_MODIFIER       GDK_CONTROL_MASK
-#define TINYTERM_KEY_FONTSIZE_INCREASE       GDK_KEY_Up
-#define TINYTERM_KEY_FONTSIZE_DECREASE       GDK_KEY_Down
+#define TINYTERM_MODIFIER	(GDK_CONTROL_MASK | GDK_MOD1_MASK)
+#define TINYTERM_KEY_COPY	GDK_KEY_C
+#define TINYTERM_KEY_PASTE	GDK_KEY_V
 
 /* Regular expression matching urls */
 #define SPECIAL_CHARS   "[[:alnum:]\\Q+-_,?;.:/!%$^*&~#=()\\E]"
