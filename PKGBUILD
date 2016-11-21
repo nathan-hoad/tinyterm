@@ -6,11 +6,11 @@ pkgver=0.2.6.ga28969d
 pkgrel=1
 pkgdesc="Very lightweight terminal emulator based on VTE (fork of tinyterm-svn package)"
 arch=('i686' 'x86_64')
-url="https://github.com/lahwaacz/tinyterm"
+url="https://github.com/laelath/tinyterm"
 license=('MIT')
-depends=('vte')
+depends=('vte3')
 makedepends=('git')
-source=('git://github.com/lahwaacz/tinyterm.git')
+source=('git://github.com/laelath/tinyterm.git')
 md5sums=('SKIP')
 
 pkgver() {
