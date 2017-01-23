@@ -181,7 +181,8 @@ vte_exit_cb(VteTerminal *vte, gint status, gpointer user_data)
 {
 	GtkWindow *window = (GtkWindow*)user_data;
 
-	gtk_widget_destroy(GTK_WIDGET(window));
+	//gtk_widget_destroy(GTK_WIDGET(window));
+	gtk_window_close(window);
 }
 
 static void
@@ -334,7 +335,7 @@ main (int argc, char* argv[])
 
 	GtkApplication *app;
 	int status;
-	app = gtk_application_new("com.laelath.github.tinyterm", G_APPLICATION_HANDLES_COMMAND_LINE);
+	app = gtk_application_new("us.laelath.tinyterm", G_APPLICATION_HANDLES_COMMAND_LINE);
 	_application = G_APPLICATION(app);
 	g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
 	g_signal_connect(app, "command-line", G_CALLBACK(command_line), NULL);
