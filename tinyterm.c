@@ -25,6 +25,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <sys/wait.h>
 
@@ -40,6 +41,8 @@ static GApplication *_application = NULL;   // needs to be global for signal_han
 static void
 window_urgency_hint_cb(VteTerminal* vte, gpointer user_data)
 {
+	(void)user_data;
+
 	gtk_window_set_urgency_hint(GTK_WINDOW (gtk_widget_get_toplevel(GTK_WIDGET (vte))), TRUE);
 }
 
@@ -70,6 +73,21 @@ key_press_cb(VteTerminal* vte, GdkEventKey* event)
 			case TINYTERM_KEY_PASTE:
 				vte_terminal_paste_clipboard(vte);
 				return TRUE;
+			case TINYTERM_KEY_FONTSIZE_INCREASE: {
+				PangoFontDescription *font = pango_font_description_copy(vte_terminal_get_font(vte));
+				pango_font_description_set_size(font, (pango_font_description_get_size(font) / PANGO_SCALE + 1) * PANGO_SCALE);
+				vte_terminal_set_font(vte, font);
+				return TRUE;
+			}
+			case TINYTERM_KEY_FONTSIZE_DECREASE: {
+				PangoFontDescription *font = pango_font_description_copy(vte_terminal_get_font(vte));
+				const gint size = pango_font_description_get_size(font) / PANGO_SCALE - 1;
+				if (size > 0) {
+					pango_font_description_set_size(font, size * PANGO_SCALE);
+					vte_terminal_set_font(vte, font);
+				}
+				return TRUE;
+			}
 		}
 	}
 	return FALSE;
@@ -78,9 +96,11 @@ key_press_cb(VteTerminal* vte, GdkEventKey* event)
 static void
 vte_config(VteTerminal* vte)
 {
-	GRegex* regex = g_regex_new(url_regex, G_REGEX_CASELESS, G_REGEX_MATCH_NOTEMPTY, NULL);
+	//GRegex* regex = g_regex_new(url_regex, G_REGEX_CASELESS, G_REGEX_MATCH_NOTEMPTY, NULL);
+	VteRegex* regex = vte_regex_new_for_search(url_regex, strlen(url_regex), 0, NULL);
 
-	vte_terminal_search_set_gregex(vte, regex, G_REGEX_MATCH_NOTEMPTY);
+	//vte_terminal_search_set_gregex(vte, regex, G_REGEX_MATCH_NOTEMPTY);
+	vte_terminal_search_set_regex           (vte, regex, 0);
 	vte_terminal_search_set_wrap_around     (vte, TINYTERM_SEARCH_WRAP_AROUND);
 	vte_terminal_set_audible_bell           (vte, TINYTERM_AUDIBLE_BELL);
 	vte_terminal_set_cursor_shape           (vte, TINYTERM_CURSOR_SHAPE);
@@ -111,7 +131,7 @@ vte_config(VteTerminal* vte)
 	gdk_rgba_parse(&color_palette[14], TINYTERM_COLOR0E);
 	gdk_rgba_parse(&color_palette[15], TINYTERM_COLOR0F);
 
-	vte_terminal_set_colors(vte, &color_fg, &color_bg, &color_palette, 16);
+	vte_terminal_set_colors(vte, &color_fg, &color_bg, color_palette, 16);
 }
 
 static void
@@ -161,6 +181,9 @@ vte_spawn(VteTerminal* vte, char* working_directory, char* command, char** envir
 static void
 window_close(GtkWindow* window, gint status, gpointer user_data)
 {
+	(void)window;
+	(void)status;
+
 	GtkApplication *app = (GtkApplication*)user_data;
 
 	int count = 0;
@@ -179,6 +202,9 @@ window_close(GtkWindow* window, gint status, gpointer user_data)
 static void
 vte_exit_cb(VteTerminal *vte, gint status, gpointer user_data)
 {
+	(void)vte;
+	(void)status;
+
 	GtkWindow *window = (GtkWindow*)user_data;
 
 	//gtk_widget_destroy(GTK_WIDGET(window));
@@ -186,7 +212,7 @@ vte_exit_cb(VteTerminal *vte, gint status, gpointer user_data)
 }
 
 static void
-parse_arguments(int argc, char* argv[], char** command, char** directory, gboolean* keep, char** name, char** title)
+parse_arguments(int argc, char* argv[], char** command, char** directory, gboolean* keep,/* char** name,*/ char** title)
 {
 	gboolean version = FALSE;   // show version?
 	const GOptionEntry entries[] = {
@@ -194,7 +220,7 @@ parse_arguments(int argc, char* argv[], char** command, char** directory, gboole
 		{"execute",   'e', 0, G_OPTION_ARG_STRING,  command,    "Execute command instead of default shell.", "COMMAND"},
 		{"directory", 'd', 0, G_OPTION_ARG_STRING,  directory,  "Sets the working directory for the shell (or the command specified via -e).", "PATH"},
 		{"keep",      'k', 0, G_OPTION_ARG_NONE,    keep,       "Don't exit the terminal after child process exits.", 0},
-		{"name",      'n', 0, G_OPTION_ARG_STRING,  name,       "Set first value of WM_CLASS property; second value is always 'TinyTerm' (default: 'tinyterm')", "NAME"},
+		//{"name",      'n', 0, G_OPTION_ARG_STRING,  name,       "Set first value of WM_CLASS property; second value is always 'TinyTerm' (default: 'tinyterm')", "NAME"},
 		{"title",     't', 0, G_OPTION_ARG_STRING,  title,      "Set value of WM_NAME property; disables window_title_cb (default: 'TinyTerm')", "TITLE"},
 		{ NULL }
 	};
@@ -221,10 +247,13 @@ parse_arguments(int argc, char* argv[], char** command, char** directory, gboole
 static void
 signal_handler(int signal)
 {
+	(void)signal;
+
 	g_application_quit(_application);
 }
 
-void new_window(GtkApplication *app, gchar **argv, gint argc)
+void
+new_window(GtkApplication *app, gchar **argv, gint argc)
 {
 	GtkWidget* window;
 	GtkWidget* box;
@@ -237,16 +266,17 @@ void new_window(GtkApplication *app, gchar **argv, gint argc)
 	char* command = NULL;
 	char* directory = NULL;
 	gboolean keep = FALSE;
-	char* name = NULL;
+	//char* name = NULL;
 	char* title = NULL;
 
-	parse_arguments(argc, argv, &command, &directory, &keep, &name, &title);
+	//parse_arguments(argc, argv, &command, &directory, &keep, &name, &title);
+	parse_arguments(argc, argv, &command, &directory, &keep, &title);
 
 	/* Create window */
 	window = gtk_application_window_new(GTK_APPLICATION(app));
 	g_signal_connect(window, "delete-event", G_CALLBACK(window_close), app);
 
-	gtk_window_set_wmclass(GTK_WINDOW (window), name ? name : "tinyterm", "TinyTerm");
+	//gtk_window_set_wmclass(GTK_WINDOW (window), name ? name : "tinyterm", "TinyTerm");
 	gtk_window_set_title(GTK_WINDOW (window), title ? title : "TinyTerm");
 
 	/* Set window icon supplied by an icon theme */
@@ -294,7 +324,7 @@ void new_window(GtkApplication *app, gchar **argv, gint argc)
 	/* cleanup */
 	g_free(command);
 	g_free(directory);
-	g_free(name);
+	//g_free(name);
 	g_free(title);
 
 	/* Show widgets and run main loop */
@@ -304,12 +334,16 @@ void new_window(GtkApplication *app, gchar **argv, gint argc)
 static void
 activate(GApplication *app, gpointer user_data)
 {
+	(void)user_data;
+
 	new_window(GTK_APPLICATION(app), NULL, 0);
 }
 
 static void
 command_line(GApplication *app, GApplicationCommandLine *command_line, gpointer user_data)
 {
+	(void)user_data;
+
 	gchar **argc;
 	gint argv;
 	argc = g_application_command_line_get_arguments(command_line, &argv);
@@ -325,13 +359,13 @@ main (int argc, char* argv[])
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
 
-	GtkCssProvider *provider = gtk_css_provider_new();
+	//GtkCssProvider *provider = gtk_css_provider_new();
 
-	gtk_css_provider_load_from_data(provider, TINYTERM_STYLE, strlen(TINYTERM_STYLE), NULL);
+	//gtk_css_provider_load_from_data(provider, TINYTERM_STYLE, strlen(TINYTERM_STYLE), NULL);
 
-	gtk_style_context_add_provider_for_screen(
-			gdk_screen_get_default(), provider,
-			GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+	//gtk_style_context_add_provider_for_screen(
+	//		gdk_screen_get_default(), provider,
+	//		GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
 	GtkApplication *app;
 	int status;
@@ -343,4 +377,3 @@ main (int argc, char* argv[])
 	g_object_unref(app);
 	return status;
 }
-
