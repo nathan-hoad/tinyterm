@@ -35,7 +35,6 @@
 #define TINYTERM_AUDIBLE_BELL   FALSE
 #define TINYTERM_VISIBLE_BELL   FALSE
 #define TINYTERM_FONT           "Inconsolata 12"
-//#define TINYTERM_STYLE "GtkWindow { background: black; }"
 
 #define TINYTERM_COLOR_BACKGROUND "#282828"
 #define TINYTERM_COLOR_FOREGROUND "#ebdbb2"
@@ -67,12 +66,7 @@
 #define TINYTERM_WORD_CHARS "-A-Za-z0-9:./?%&#_=+@~"
 
 /* Keyboard shortcuts */
-#define TINYTERM_MODIFIER				(GDK_CONTROL_MASK | GDK_MOD1_MASK)
-#define TINYTERM_KEY_COPY				GDK_KEY_C
-#define TINYTERM_KEY_PASTE				GDK_KEY_V
-#define TINYTERM_KEY_FONTSIZE_INCREASE	GDK_KEY_equal
-#define TINYTERM_KEY_FONTSIZE_DECREASE	GDK_KEY_minus
-
+#define TINYTERM_MODIFIER (GDK_CONTROL_MASK | GDK_MOD1_MASK)
 
 /* Regular expression matching urls */
 #define SPECIAL_CHARS   "[[:alnum:]\\Q+-_,?;.:/!%$^*&~#=()\\E]"

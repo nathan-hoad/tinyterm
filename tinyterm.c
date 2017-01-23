@@ -67,20 +67,22 @@ key_press_cb(VteTerminal* vte, GdkEventKey* event)
 {
 	if ((event->state & (TINYTERM_MODIFIER)) == (TINYTERM_MODIFIER)) {
 		switch (gdk_keyval_to_upper(event->keyval)) {
-			case TINYTERM_KEY_COPY:
+			case GDK_KEY_C:
 				vte_terminal_copy_clipboard(vte);
 				return TRUE;
-			case TINYTERM_KEY_PASTE:
+			case GDK_KEY_V:
 				vte_terminal_paste_clipboard(vte);
 				return TRUE;
-			case TINYTERM_KEY_FONTSIZE_INCREASE: {
+			case GDK_KEY_plus:
+			case GDK_KEY_equal: {
 				PangoFontDescription *font = pango_font_description_copy_static(vte_terminal_get_font(vte));
 				pango_font_description_set_size(font, (pango_font_description_get_size(font) / PANGO_SCALE + 1) * PANGO_SCALE);
 				vte_terminal_set_font(vte, font);
 				pango_font_description_free(font);
 				return TRUE;
 			}
-			case TINYTERM_KEY_FONTSIZE_DECREASE: {
+			case GDK_KEY_underscore:
+			case GDK_KEY_minus: {
 				PangoFontDescription *font = pango_font_description_copy_static(vte_terminal_get_font(vte));
 				const gint size = pango_font_description_get_size(font) / PANGO_SCALE - 1;
 				if (size > 0) {
@@ -98,10 +100,8 @@ key_press_cb(VteTerminal* vte, GdkEventKey* event)
 static void
 vte_config(VteTerminal* vte)
 {
-	//GRegex* regex = g_regex_new(url_regex, G_REGEX_CASELESS, G_REGEX_MATCH_NOTEMPTY, NULL);
 	VteRegex* regex = vte_regex_new_for_search(url_regex, strlen(url_regex), 0, NULL);
 
-	//vte_terminal_search_set_gregex(vte, regex, G_REGEX_MATCH_NOTEMPTY);
 	vte_terminal_search_set_regex           (vte, regex, 0);
 	vte_terminal_search_set_wrap_around     (vte, TINYTERM_SEARCH_WRAP_AROUND);
 	vte_terminal_set_audible_bell           (vte, TINYTERM_AUDIBLE_BELL);
@@ -111,6 +111,8 @@ vte_config(VteTerminal* vte)
 	vte_terminal_set_scrollback_lines       (vte, TINYTERM_SCROLLBACK_LINES);
 	PangoFontDescription *font = pango_font_description_from_string(TINYTERM_FONT);
 	vte_terminal_set_font(vte, font);
+
+	pango_font_description_free(font);
 
 	GdkRGBA color_fg, color_bg;
 	GdkRGBA color_palette[16];
@@ -209,12 +211,11 @@ vte_exit_cb(VteTerminal *vte, gint status, gpointer user_data)
 
 	GtkWindow *window = (GtkWindow*)user_data;
 
-	//gtk_widget_destroy(GTK_WIDGET(window));
 	gtk_window_close(window);
 }
 
 static void
-parse_arguments(int argc, char* argv[], char** command, char** directory, gboolean* keep,/* char** name,*/ char** title)
+parse_arguments(int argc, char* argv[], char** command, char** directory, gboolean* keep, char** title)
 {
 	gboolean version = FALSE;   // show version?
 	const GOptionEntry entries[] = {
@@ -222,7 +223,6 @@ parse_arguments(int argc, char* argv[], char** command, char** directory, gboole
 		{"execute",   'e', 0, G_OPTION_ARG_STRING,  command,    "Execute command instead of default shell.", "COMMAND"},
 		{"directory", 'd', 0, G_OPTION_ARG_STRING,  directory,  "Sets the working directory for the shell (or the command specified via -e).", "PATH"},
 		{"keep",      'k', 0, G_OPTION_ARG_NONE,    keep,       "Don't exit the terminal after child process exits.", 0},
-		//{"name",      'n', 0, G_OPTION_ARG_STRING,  name,       "Set first value of WM_CLASS property; second value is always 'TinyTerm' (default: 'tinyterm')", "NAME"},
 		{"title",     't', 0, G_OPTION_ARG_STRING,  title,      "Set value of WM_NAME property; disables window_title_cb (default: 'TinyTerm')", "TITLE"},
 		{ NULL }
 	};
@@ -271,14 +271,12 @@ new_window(GtkApplication *app, gchar **argv, gint argc)
 	//char* name = NULL;
 	char* title = NULL;
 
-	//parse_arguments(argc, argv, &command, &directory, &keep, &name, &title);
 	parse_arguments(argc, argv, &command, &directory, &keep, &title);
 
 	/* Create window */
 	window = gtk_application_window_new(GTK_APPLICATION(app));
 	g_signal_connect(window, "delete-event", G_CALLBACK(window_close), app);
 
-	//gtk_window_set_wmclass(GTK_WINDOW (window), name ? name : "tinyterm", "TinyTerm");
 	gtk_window_set_title(GTK_WINDOW (window), title ? title : "TinyTerm");
 
 	/* Set window icon supplied by an icon theme */
@@ -326,7 +324,6 @@ new_window(GtkApplication *app, gchar **argv, gint argc)
 	/* cleanup */
 	g_free(command);
 	g_free(directory);
-	//g_free(name);
 	g_free(title);
 
 	/* Show widgets and run main loop */
