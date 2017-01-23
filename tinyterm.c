@@ -74,18 +74,20 @@ key_press_cb(VteTerminal* vte, GdkEventKey* event)
 				vte_terminal_paste_clipboard(vte);
 				return TRUE;
 			case TINYTERM_KEY_FONTSIZE_INCREASE: {
-				PangoFontDescription *font = pango_font_description_copy(vte_terminal_get_font(vte));
+				PangoFontDescription *font = pango_font_description_copy_static(vte_terminal_get_font(vte));
 				pango_font_description_set_size(font, (pango_font_description_get_size(font) / PANGO_SCALE + 1) * PANGO_SCALE);
 				vte_terminal_set_font(vte, font);
+				pango_font_description_free(font);
 				return TRUE;
 			}
 			case TINYTERM_KEY_FONTSIZE_DECREASE: {
-				PangoFontDescription *font = pango_font_description_copy(vte_terminal_get_font(vte));
+				PangoFontDescription *font = pango_font_description_copy_static(vte_terminal_get_font(vte));
 				const gint size = pango_font_description_get_size(font) / PANGO_SCALE - 1;
 				if (size > 0) {
 					pango_font_description_set_size(font, size * PANGO_SCALE);
 					vte_terminal_set_font(vte, font);
 				}
+				pango_font_description_free(font);
 				return TRUE;
 			}
 		}
