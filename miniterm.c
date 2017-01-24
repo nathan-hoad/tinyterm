@@ -118,8 +118,8 @@ vte_config(VteTerminal* vte)
 
 	char config_dir[PATH_MAX];
 	char config_path[PATH_MAX];
-	snprintf(config_dir, PATH_MAX, "%s/smallterm", g_get_user_config_dir());
-	snprintf(config_path, PATH_MAX, "%s/smallterm.conf", config_dir);
+	snprintf(config_dir, PATH_MAX, "%s/miniterm", g_get_user_config_dir());
+	snprintf(config_path, PATH_MAX, "%s/miniterm.conf", config_dir);
 
 	GKeyFile *config_file = g_key_file_new();
 	if (g_key_file_load_from_file(config_file, config_path, 0, NULL)) {
