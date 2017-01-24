@@ -6,7 +6,7 @@ Fork of https://github.com/nathan-hoad/tinyterm that adds functionality to act a
 - shortcuts for increasing/decreasing font size and copying/pasting
 - runs against vte3 for true color support
 - runs a single instance to save memory, like urxvtd/urxvtc
-- parses a config file at XDG\_CONFIG\_HOME/smallterm
+- parses a config file at XDG\_CONFIG\_HOME/miniterm/
 
 Dependencies
 ------------
