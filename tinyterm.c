@@ -1,6 +1,7 @@
 /*
  * MIT/X Consortium License
  *
+ * © 2017 Justin Frank
  * © 2013 Jakub Klinkovský
  * © 2009 Sebastian Linke
  *
@@ -27,7 +28,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
+
+#include <linux/limits.h>
 
 #include <glib.h>
 #include <gdk/gdkkeysyms.h>
@@ -74,24 +78,26 @@ key_press_cb(VteTerminal* vte, GdkEventKey* event)
 				vte_terminal_paste_clipboard(vte);
 				return TRUE;
 			case GDK_KEY_plus:
-			case GDK_KEY_equal: {
-				PangoFontDescription *font = pango_font_description_copy_static(vte_terminal_get_font(vte));
-				pango_font_description_set_size(font, (pango_font_description_get_size(font) / PANGO_SCALE + 1) * PANGO_SCALE);
-				vte_terminal_set_font(vte, font);
-				pango_font_description_free(font);
-				return TRUE;
-			}
-			case GDK_KEY_underscore:
-			case GDK_KEY_minus: {
-				PangoFontDescription *font = pango_font_description_copy_static(vte_terminal_get_font(vte));
-				const gint size = pango_font_description_get_size(font) / PANGO_SCALE - 1;
-				if (size > 0) {
-					pango_font_description_set_size(font, size * PANGO_SCALE);
+			case GDK_KEY_equal:
+				{
+					PangoFontDescription *font = pango_font_description_copy_static(vte_terminal_get_font(vte));
+					pango_font_description_set_size(font, (pango_font_description_get_size(font) / PANGO_SCALE + 1) * PANGO_SCALE);
 					vte_terminal_set_font(vte, font);
+					pango_font_description_free(font);
+					return TRUE;
 				}
-				pango_font_description_free(font);
-				return TRUE;
-			}
+			case GDK_KEY_underscore:
+			case GDK_KEY_minus:
+				{
+					PangoFontDescription *font = pango_font_description_copy_static(vte_terminal_get_font(vte));
+					const gint size = pango_font_description_get_size(font) / PANGO_SCALE - 1;
+					if (size > 0) {
+						pango_font_description_set_size(font, size * PANGO_SCALE);
+						vte_terminal_set_font(vte, font);
+					}
+					pango_font_description_free(font);
+					return TRUE;
+				}
 		}
 	}
 	return FALSE;
@@ -109,33 +115,59 @@ vte_config(VteTerminal* vte)
 	vte_terminal_set_cursor_blink_mode      (vte, TINYTERM_CURSOR_BLINK);
 	vte_terminal_set_word_char_exceptions   (vte, TINYTERM_WORD_CHARS);
 	vte_terminal_set_scrollback_lines       (vte, TINYTERM_SCROLLBACK_LINES);
-	PangoFontDescription *font = pango_font_description_from_string(TINYTERM_FONT);
-	vte_terminal_set_font(vte, font);
 
-	pango_font_description_free(font);
+	char config_dir[PATH_MAX];
+	char config_path[PATH_MAX];
+	snprintf(config_dir, PATH_MAX, "%s/smallterm", g_get_user_config_dir());
+	snprintf(config_path, PATH_MAX, "%s/smallterm.conf", config_dir);
 
-	GdkRGBA color_fg, color_bg;
-	GdkRGBA color_palette[16];
-	gdk_rgba_parse(&color_fg, TINYTERM_COLOR_FOREGROUND);
-	gdk_rgba_parse(&color_bg, TINYTERM_COLOR_BACKGROUND);
-	gdk_rgba_parse(&color_palette[0], TINYTERM_COLOR00);
-	gdk_rgba_parse(&color_palette[1], TINYTERM_COLOR01);
-	gdk_rgba_parse(&color_palette[2], TINYTERM_COLOR02);
-	gdk_rgba_parse(&color_palette[3], TINYTERM_COLOR03);
-	gdk_rgba_parse(&color_palette[4], TINYTERM_COLOR04);
-	gdk_rgba_parse(&color_palette[5], TINYTERM_COLOR05);
-	gdk_rgba_parse(&color_palette[6], TINYTERM_COLOR06);
-	gdk_rgba_parse(&color_palette[7], TINYTERM_COLOR07);
-	gdk_rgba_parse(&color_palette[8], TINYTERM_COLOR08);
-	gdk_rgba_parse(&color_palette[9], TINYTERM_COLOR09);
-	gdk_rgba_parse(&color_palette[10], TINYTERM_COLOR0A);
-	gdk_rgba_parse(&color_palette[11], TINYTERM_COLOR0B);
-	gdk_rgba_parse(&color_palette[12], TINYTERM_COLOR0C);
-	gdk_rgba_parse(&color_palette[13], TINYTERM_COLOR0D);
-	gdk_rgba_parse(&color_palette[14], TINYTERM_COLOR0E);
-	gdk_rgba_parse(&color_palette[15], TINYTERM_COLOR0F);
+	GKeyFile *config_file = g_key_file_new();
+	if (g_key_file_load_from_file(config_file, config_path, 0, NULL)) {
+		PangoFontDescription *font = pango_font_description_from_string(g_key_file_get_string(config_file, "Font", "font", NULL));
+		vte_terminal_set_font(vte, font);
+		pango_font_description_free(font);
 
-	vte_terminal_set_colors(vte, &color_fg, &color_bg, color_palette, 16);
+		GdkRGBA color_fg, color_bg;
+		gdk_rgba_parse(&color_fg, g_key_file_get_string(config_file, "Colors", "foreground", NULL));
+		gdk_rgba_parse(&color_bg, g_key_file_get_string(config_file, "Colors", "background", NULL));
+
+		GdkRGBA color_palette[16];
+		for (int i = 0; i < 16; ++i) {
+			char key[8];
+			snprintf(key, sizeof(key), "color%02x", i);
+			gdk_rgba_parse(&color_palette[i], g_key_file_get_string(config_file, "Colors", key, NULL));
+		}
+
+		//gdk_rgba_parse(&color_palette[0], TINYTERM_COLOR00);
+		//gdk_rgba_parse(&color_palette[1], TINYTERM_COLOR01);
+		//gdk_rgba_parse(&color_palette[2], TINYTERM_COLOR02);
+		//gdk_rgba_parse(&color_palette[3], TINYTERM_COLOR03);
+		//gdk_rgba_parse(&color_palette[4], TINYTERM_COLOR04);
+		//gdk_rgba_parse(&color_palette[5], TINYTERM_COLOR05);
+		//gdk_rgba_parse(&color_palette[6], TINYTERM_COLOR06);
+		//gdk_rgba_parse(&color_palette[7], TINYTERM_COLOR07);
+		//gdk_rgba_parse(&color_palette[8], TINYTERM_COLOR08);
+		//gdk_rgba_parse(&color_palette[9], TINYTERM_COLOR09);
+		//gdk_rgba_parse(&color_palette[10], TINYTERM_COLOR0A);
+		//gdk_rgba_parse(&color_palette[11], TINYTERM_COLOR0B);
+		//gdk_rgba_parse(&color_palette[12], TINYTERM_COLOR0C);
+		//gdk_rgba_parse(&color_palette[13], TINYTERM_COLOR0D);
+		//gdk_rgba_parse(&color_palette[14], TINYTERM_COLOR0E);
+		//gdk_rgba_parse(&color_palette[15], TINYTERM_COLOR0F);
+
+		vte_terminal_set_colors(vte, &color_fg, &color_bg, color_palette, 16);
+	} else {
+		mkdir(config_dir, 0777);
+		FILE *file = fopen(config_path, "w");
+		fprintf(file, "[Font]\n#font=\n\n"
+				"[Colors]\n#foreground=\n#background=\n"
+				"#color00=\n#color01=\n#color02=\n#color03=\n"
+				"#color04=\n#color05=\n#color06=\n#color07=\n"
+				"#color08=\n#color09=\n#color0a=\n#color0b=\n"
+				"#color0c=\n#color0d=\n#color0e=\n#color0f=\n");
+		fclose(file);
+	}
+	g_key_file_free(config_file);
 }
 
 static void

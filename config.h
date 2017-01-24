@@ -1,6 +1,7 @@
 /*
  * MIT/X Consortium License
  *
+ * © 2017 Justin Frank
  * © 2015 Nathan Hoad
  * © 2013 Jakub Klinkovský
  * © 2009 Sebastian Linke

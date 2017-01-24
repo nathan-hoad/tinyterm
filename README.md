@@ -1,12 +1,12 @@
-tinyterm
+smallterm
 ========
 
-Fork of https://github.com/nathan-hoad/tinyterm, which is a fork of https://github.com/lahwaacz/tinyterm, which is a fork of https://code.google.com/p/tinyterm/
+Fork of https://github.com/nathan-hoad/tinyterm that adds functionality to act as a replacement for urxvt.
 
-- shortcuts for increasing/decreasing font size
+- shortcuts for increasing/decreasing font size and copying/pasting
 - runs against vte3 for true color support
-- runs a single instance to save memory, like urxvtd/urxvtc.
-- changed config to have gruvbox colorscheme
+- runs a single instance to save memory, like urxvtd/urxvtc
+- parses a config file at XDG\_CONFIG\_HOME/smallterm
 
 Dependencies
 ------------
