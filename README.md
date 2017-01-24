@@ -1,4 +1,4 @@
-smallterm
+miniterm
 ========
 
 Fork of https://github.com/nathan-hoad/tinyterm that adds functionality to act as a replacement for urxvt.
