@@ -27,47 +27,26 @@
  */
 
 /* Terminal emulation (value of $TERM) (default: xterm) */
-#define TINYTERM_TERMINFO       "xterm-256color"
+#define TERMINFO       "xterm-256color"
 
-#define TINYTERM_DYNAMIC_WINDOW_TITLE   // uncomment to enable window_title_cb
-#define TINYTERM_URGENT_ON_BELL         // uncomment to enable window_urgency_hint_cb
-#define TINYTERM_SCROLLBACK_LINES   10000
-#define TINYTERM_SEARCH_WRAP_AROUND TRUE
-#define TINYTERM_AUDIBLE_BELL   FALSE
-#define TINYTERM_VISIBLE_BELL   FALSE
-#define TINYTERM_FONT           "Inconsolata 12"
-
-#define TINYTERM_COLOR_BACKGROUND "#282828"
-#define TINYTERM_COLOR_FOREGROUND "#ebdbb2"
-#define TINYTERM_COLOR00 "#282828"
-#define TINYTERM_COLOR01 "#cc241d"
-#define TINYTERM_COLOR02 "#98971a"
-#define TINYTERM_COLOR03 "#d79921"
-#define TINYTERM_COLOR04 "#458588"
-#define TINYTERM_COLOR05 "#b16286"
-#define TINYTERM_COLOR06 "#689d6a"
-#define TINYTERM_COLOR07 "#a89984"
-
-#define TINYTERM_COLOR08 "#928374"
-#define TINYTERM_COLOR09 "#fb4934"
-#define TINYTERM_COLOR0A "#b8bb26"
-#define TINYTERM_COLOR0B "#fabd2f"
-#define TINYTERM_COLOR0C "#83a598"
-#define TINYTERM_COLOR0D "#d3869b"
-#define TINYTERM_COLOR0E "#8ec07c"
-#define TINYTERM_COLOR0F "#ebdbb2"
+#define DYNAMIC_WINDOW_TITLE   // uncomment to enable window_title_cb
+#define URGENT_ON_BELL         // uncomment to enable window_urgency_hint_cb
+#define SCROLLBACK_LINES   10000
+#define SEARCH_WRAP_AROUND TRUE
+#define AUDIBLE_BELL   FALSE
+#define VISIBLE_BELL   FALSE
 
 /* One of VTE_CURSOR_SHAPE_BLOCK, VTE_CURSOR_SHAPE_IBEAM, VTE_CURSOR_SHAPE_UNDERLINE */
-#define TINYTERM_CURSOR_SHAPE   VTE_CURSOR_SHAPE_BLOCK
+#define CURSOR_SHAPE   VTE_CURSOR_SHAPE_BLOCK
 
 /* One of VTE_CURSOR_BLINK_SYSTEM, VTE_CURSOR_BLINK_ON, VTE_CURSOR_BLINK_OFF */
-#define TINYTERM_CURSOR_BLINK   VTE_CURSOR_BLINK_OFF
+#define CURSOR_BLINK   VTE_CURSOR_BLINK_OFF
 
 /* Selection behavior for double-clicks */
-#define TINYTERM_WORD_CHARS "-A-Za-z0-9:./?%&#_=+@~"
+#define WORD_CHARS "-A-Za-z0-9:./?%&#_=+@~"
 
 /* Keyboard shortcuts */
-#define TINYTERM_MODIFIER (GDK_CONTROL_MASK | GDK_MOD1_MASK)
+#define MODIFIER (GDK_CONTROL_MASK | GDK_MOD1_MASK)
 
 /* Regular expression matching urls */
 #define SPECIAL_CHARS   "[[:alnum:]\\Q+-_,?;.:/!%$^*&~#=()\\E]"

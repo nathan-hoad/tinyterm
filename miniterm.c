@@ -69,7 +69,7 @@ window_title_cb(VteTerminal* vte)
 static gboolean
 key_press_cb(VteTerminal* vte, GdkEventKey* event)
 {
-	if ((event->state & (TINYTERM_MODIFIER)) == (TINYTERM_MODIFIER)) {
+	if ((event->state & (MODIFIER)) == (MODIFIER)) {
 		switch (gdk_keyval_to_upper(event->keyval)) {
 			case GDK_KEY_C:
 				vte_terminal_copy_clipboard(vte);
@@ -109,12 +109,12 @@ vte_config(VteTerminal* vte)
 	VteRegex* regex = vte_regex_new_for_search(url_regex, strlen(url_regex), 0, NULL);
 
 	vte_terminal_search_set_regex           (vte, regex, 0);
-	vte_terminal_search_set_wrap_around     (vte, TINYTERM_SEARCH_WRAP_AROUND);
-	vte_terminal_set_audible_bell           (vte, TINYTERM_AUDIBLE_BELL);
-	vte_terminal_set_cursor_shape           (vte, TINYTERM_CURSOR_SHAPE);
-	vte_terminal_set_cursor_blink_mode      (vte, TINYTERM_CURSOR_BLINK);
-	vte_terminal_set_word_char_exceptions   (vte, TINYTERM_WORD_CHARS);
-	vte_terminal_set_scrollback_lines       (vte, TINYTERM_SCROLLBACK_LINES);
+	vte_terminal_search_set_wrap_around     (vte, SEARCH_WRAP_AROUND);
+	vte_terminal_set_audible_bell           (vte, AUDIBLE_BELL);
+	vte_terminal_set_cursor_shape           (vte, CURSOR_SHAPE);
+	vte_terminal_set_cursor_blink_mode      (vte, CURSOR_BLINK);
+	vte_terminal_set_word_char_exceptions   (vte, WORD_CHARS);
+	vte_terminal_set_scrollback_lines       (vte, SCROLLBACK_LINES);
 
 	char config_dir[PATH_MAX];
 	char config_path[PATH_MAX];
@@ -137,23 +137,6 @@ vte_config(VteTerminal* vte)
 			snprintf(key, sizeof(key), "color%02x", i);
 			gdk_rgba_parse(&color_palette[i], g_key_file_get_string(config_file, "Colors", key, NULL));
 		}
-
-		//gdk_rgba_parse(&color_palette[0], TINYTERM_COLOR00);
-		//gdk_rgba_parse(&color_palette[1], TINYTERM_COLOR01);
-		//gdk_rgba_parse(&color_palette[2], TINYTERM_COLOR02);
-		//gdk_rgba_parse(&color_palette[3], TINYTERM_COLOR03);
-		//gdk_rgba_parse(&color_palette[4], TINYTERM_COLOR04);
-		//gdk_rgba_parse(&color_palette[5], TINYTERM_COLOR05);
-		//gdk_rgba_parse(&color_palette[6], TINYTERM_COLOR06);
-		//gdk_rgba_parse(&color_palette[7], TINYTERM_COLOR07);
-		//gdk_rgba_parse(&color_palette[8], TINYTERM_COLOR08);
-		//gdk_rgba_parse(&color_palette[9], TINYTERM_COLOR09);
-		//gdk_rgba_parse(&color_palette[10], TINYTERM_COLOR0A);
-		//gdk_rgba_parse(&color_palette[11], TINYTERM_COLOR0B);
-		//gdk_rgba_parse(&color_palette[12], TINYTERM_COLOR0C);
-		//gdk_rgba_parse(&color_palette[13], TINYTERM_COLOR0D);
-		//gdk_rgba_parse(&color_palette[14], TINYTERM_COLOR0E);
-		//gdk_rgba_parse(&color_palette[15], TINYTERM_COLOR0F);
 
 		vte_terminal_set_colors(vte, &color_fg, &color_bg, color_palette, 16);
 	} else {
@@ -273,7 +256,7 @@ parse_arguments(int argc, char* argv[], char** command, char** directory, gboole
 	}
 
 	if (version) {
-		g_print("tinyterm " TINYTERM_VERSION "\n");
+		g_print("tinyterm " MINITERM_VERSION "\n");
 		exit(EXIT_SUCCESS);
 	}
 }
@@ -330,15 +313,15 @@ new_window(GtkApplication *app, gchar **argv, gint argc)
 	if (!keep)
 		g_signal_connect(vte, "child-exited", G_CALLBACK (vte_exit_cb), window);
 	g_signal_connect(vte, "key-press-event", G_CALLBACK (key_press_cb), NULL);
-#ifdef TINYTERM_URGENT_ON_BELL
+#ifdef URGENT_ON_BELL
 	g_signal_connect(vte, "bell", G_CALLBACK (window_urgency_hint_cb), NULL);
 	g_signal_connect(window, "focus-in-event",  G_CALLBACK (window_focus_cb), NULL);
 	g_signal_connect(window, "focus-out-event", G_CALLBACK (window_focus_cb), NULL);
-#endif // TINYTERM_URGENT_ON_BELL
-#ifdef TINYTERM_DYNAMIC_WINDOW_TITLE
+#endif // URGENT_ON_BELL
+#ifdef DYNAMIC_WINDOW_TITLE
 	if (!title)
 		g_signal_connect(vte, "window-title-changed", G_CALLBACK (window_title_cb), NULL);
-#endif // TINYTERM_DYNAMIC_WINDOW_TITLE
+#endif // DYNAMIC_WINDOW_TITLE
 
 	/* Apply geometry hints to handle terminal resizing */
 	geo_hints.base_width  = vte_terminal_get_char_width(vte);
@@ -389,14 +372,6 @@ main (int argc, char* argv[])
 	signal(SIGHUP, signal_handler);
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
-
-	//GtkCssProvider *provider = gtk_css_provider_new();
-
-	//gtk_css_provider_load_from_data(provider, TINYTERM_STYLE, strlen(TINYTERM_STYLE), NULL);
-
-	//gtk_style_context_add_provider_for_screen(
-	//		gdk_screen_get_default(), provider,
-	//		GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
 	GtkApplication *app;
 	int status;
