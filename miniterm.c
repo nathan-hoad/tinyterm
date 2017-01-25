@@ -48,6 +48,16 @@ static gboolean key_press_cb(VteTerminal* vte, GdkEventKey* event);
 static void vte_config(VteTerminal* vte);
 static void vte_spawn(VteTerminal* vte, char* working_directory, char* command,
     char** environment);
+static gboolean read_config_file(VteTerminal* vte, const char* config_path);
+static void window_close(GtkWindow* window, gint status, gpointer user_data);
+static void vte_exit_cb(VteTerminal* vte, gint status, gpointer user_data);
+static void parse_arguments(int argc, char* argv[], char** command,
+    char** directory, gboolean* keep, char** title);
+static void signal_handler(int signal);
+static void new_window(GtkApplication *app, gchar **argv, gint argc);
+static void activate(GApplication* app, gpointer user_data);
+static void command_line(GApplication *app,
+    GApplicationCommandLine *command_line, gpointer user_data);
 
 /* The application is global for use with signal handlers. */
 static GApplication *_application = NULL;
@@ -129,6 +139,45 @@ key_press_cb(VteTerminal* vte, GdkEventKey* event)
 	return TRUE;
 }
 
+/*
+ * Reads the config file into the terminal.
+ *
+ * Returns true on success, false on failure.
+ */
+static gboolean
+read_config_file(VteTerminal* vte, const char* config_path)
+{
+	GKeyFile* config_file = g_key_file_new();
+	if (!g_key_file_load_from_file(config_file, config_path, 0, NULL))
+		return FALSE;
+	PangoFontDescription* font = pango_font_description_from_string(
+	    g_key_file_get_string(config_file, "Font", "font", NULL));
+	if (font == NULL)
+		return FALSE;
+	vte_terminal_set_font(vte, font);
+	pango_font_description_free(font);
+
+	GdkRGBA color_fg, color_bg;
+	if (!gdk_rgba_parse(&color_fg, g_key_file_get_string(config_file,
+		    "Colors", "foreground", NULL)))
+		return FALSE;
+	if (!gdk_rgba_parse(&color_bg, g_key_file_get_string(config_file,
+		"Colors", "background", NULL)))
+		return FALSE;
+
+	GdkRGBA color_palette[16];
+	for (int i = 0; i < 16; ++i) {
+		char key[8];
+		snprintf(key, sizeof(key), "color%02x", i);
+		if (!gdk_rgba_parse(&color_palette[i],
+			g_key_file_get_string(config_file, "Colors", key,
+			    NULL)))
+			return FALSE;
+	}
+	vte_terminal_set_colors(vte, &color_fg, &color_bg, color_palette, 16);
+	return TRUE;
+}
+
 static void
 vte_config(VteTerminal* vte)
 {
@@ -149,28 +198,7 @@ vte_config(VteTerminal* vte)
 
 	GKeyFile* config_file = g_key_file_new();
 	if (g_key_file_load_from_file(config_file, config_path, 0, NULL)) {
-		PangoFontDescription* font = pango_font_description_from_string(
-		    g_key_file_get_string(config_file, "Font", "font", NULL));
-		vte_terminal_set_font(vte, font);
-		pango_font_description_free(font);
-
-		GdkRGBA color_fg, color_bg;
-		gdk_rgba_parse(&color_fg, g_key_file_get_string(config_file,
-			"Colors", "foreground", NULL));
-		gdk_rgba_parse(&color_bg, g_key_file_get_string(config_file,
-			"Colors", "background", NULL));
-
-		GdkRGBA color_palette[16];
-		for (int i = 0; i < 16; ++i) {
-			char key[8];
-			snprintf(key, sizeof(key), "color%02x", i);
-			gdk_rgba_parse(&color_palette[i],
-			    g_key_file_get_string(config_file, "Colors", key,
-				NULL));
-		}
-
-		vte_terminal_set_colors(vte, &color_fg, &color_bg,
-		    color_palette, 16);
+		read_config_file(vte, config_path);
 	} else {
 		mkdir(config_dir, 0777);
 		FILE* file = fopen(config_path, "w");
@@ -407,6 +435,10 @@ command_line(GApplication *app, GApplicationCommandLine *command_line,
 	new_window(GTK_APPLICATION(app), argc, argv);
 }
 
+/*
+ * This program is a minimalist vte based terminal emulator that uses a basic
+ * config file.
+ */
 int
 main (int argc, char* argv[])
 {
@@ -416,13 +448,12 @@ main (int argc, char* argv[])
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
 
-	int status;
 	GtkApplication* app = gtk_application_new("us.laelath.tinyterm",
 	    G_APPLICATION_HANDLES_COMMAND_LINE);
 	_application = G_APPLICATION(app);
 	g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
 	g_signal_connect(app, "command-line", G_CALLBACK(command_line), NULL);
-	status = g_application_run(G_APPLICATION(app), argc, argv);
+	int status = g_application_run(G_APPLICATION(app), argc, argv);
 	g_object_unref(app);
 	return status;
 }
