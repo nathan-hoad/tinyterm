@@ -1,5 +1,4 @@
-V=1
-VDEVEL=$(shell test -d .git && git describe 2>/dev/null)
+V=1.1.0
 
 ifneq "$(VDEVEL)" ""
 V=$(VDEVEL)
