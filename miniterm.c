@@ -182,7 +182,6 @@ set_colors_from_key_file(VteTerminal* vte, GKeyFile* config_file)
 		if (!cl_string) {
 			g_free(fg_string);
 			g_free(bg_string);
-			g_free(cl_string);
 			return;
 		}
 		if (!gdk_rgba_parse(&color_palette[i], cl_string)) {
