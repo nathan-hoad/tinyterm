@@ -54,10 +54,13 @@ static void vte_exit_cb(VteTerminal* vte, gint status, gpointer user_data);
 static void parse_arguments(int argc, char* argv[], char** command,
     char** directory, gboolean* keep, char** title);
 static void signal_handler(int signal);
-static void new_window(GtkApplication *app, gchar **argv, gint argc);
+static void new_window(GtkApplication* app, gchar** argv, gint argc);
 static void activate(GApplication* app, gpointer user_data);
 static void command_line(GApplication *app,
     GApplicationCommandLine *command_line, gpointer user_data);
+static GtkWidget* create_vte_terminal(GtkWindow* window, gboolean keep,
+    const char* title);
+static void set_geometry_hints(VteTerminal* vte, GdkGeometry* hints);
 
 /* The application is global for use with signal handlers. */
 static GApplication *_application = NULL;
@@ -192,8 +195,8 @@ vte_config(VteTerminal* vte)
 	vte_terminal_set_word_char_exceptions(vte, WORD_CHARS);
 	vte_terminal_set_scrollback_lines(vte, SCROLLBACK_LINES);
 
-	char* config_dir = g_strconcat(config_dir, g_get_user_config_dir(),
-	    "/miniterm", NULL);
+	char* config_dir = g_strconcat(g_get_user_config_dir(), "/miniterm",
+	    NULL);
 	char* config_path = g_strconcat(config_dir, "/miniterm.conf", NULL);
 
 	GKeyFile* config_file = g_key_file_new();
@@ -333,8 +336,45 @@ signal_handler(int signal)
 	g_application_quit(_application);
 }
 
-void
-new_window(GtkApplication *app, gchar **argv, gint argc)
+static GtkWidget*
+create_vte_terminal(GtkWindow* window, gboolean keep, const char* title)
+{
+	GtkWidget* vte_widget = vte_terminal_new();
+	VteTerminal* vte = VTE_TERMINAL(vte_widget);
+	if (!keep)
+		g_signal_connect(vte, "child-exited",
+		    G_CALLBACK(vte_exit_cb), window);
+	g_signal_connect(vte, "key-press-event", G_CALLBACK (key_press_cb),
+	    NULL);
+#ifdef URGENT_ON_BELL
+	g_signal_connect(vte, "bell", G_CALLBACK(window_urgency_hint_cb),
+	    NULL);
+	g_signal_connect(window, "focus-in-event",
+	    G_CALLBACK(window_focus_cb), NULL);
+	g_signal_connect(window, "focus-out-event",
+	    G_CALLBACK(window_focus_cb), NULL);
+#endif /* URGENT_ON_BELL */
+#ifdef DYNAMIC_WINDOW_TITLE
+	if (!title)
+		g_signal_connect(vte, "window-title-changed",
+		    G_CALLBACK(window_title_cb), NULL);
+#endif /* DYNAMIC_WINDOW_TITLE */
+	return vte_widget;
+}
+
+static void
+set_geometry_hints(VteTerminal* vte, GdkGeometry* hints)
+{
+	hints->base_width = vte_terminal_get_char_width(vte);
+	hints->base_height = vte_terminal_get_char_height(vte);
+	hints->min_width = vte_terminal_get_char_width(vte);
+	hints->min_height = vte_terminal_get_char_height(vte);
+	hints->width_inc = vte_terminal_get_char_width(vte);
+	hints->height_inc = vte_terminal_get_char_height(vte);
+}
+
+static void
+new_window(GtkApplication* app, gchar** argv, gint argc)
 {
 	GtkWidget* window;
 	GtkWidget* box;
@@ -369,39 +409,18 @@ new_window(GtkApplication *app, gchar **argv, gint argc)
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_container_add(GTK_CONTAINER(window), box);
 
+
 	/* Create vte terminal widget */
-	GtkWidget* vte_widget = vte_terminal_new();
+	GtkWidget* vte_widget = create_vte_terminal(GTK_WINDOW(window), keep,
+	    title);
 	gtk_box_pack_start(GTK_BOX(box), vte_widget, TRUE, TRUE, 0);
-	VteTerminal* vte = VTE_TERMINAL (vte_widget);
-	if (!keep)
-		g_signal_connect(vte, "child-exited",
-		    G_CALLBACK(vte_exit_cb), window);
-	g_signal_connect(vte, "key-press-event", G_CALLBACK (key_press_cb),
-	    NULL);
-#ifdef URGENT_ON_BELL
-	g_signal_connect(vte, "bell", G_CALLBACK(window_urgency_hint_cb),
-	    NULL);
-	g_signal_connect(window, "focus-in-event",
-	    G_CALLBACK(window_focus_cb), NULL);
-	g_signal_connect(window, "focus-out-event",
-	    G_CALLBACK(window_focus_cb), NULL);
-#endif /* URGENT_ON_BELL */
-#ifdef DYNAMIC_WINDOW_TITLE
-	if (!title)
-		g_signal_connect(vte, "window-title-changed",
-		    G_CALLBACK(window_title_cb), NULL);
-#endif /* DYNAMIC_WINDOW_TITLE */
+	VteTerminal* vte = VTE_TERMINAL(vte_widget);
 
 	/* Apply geometry hints to handle terminal resizing */
-	geo_hints.base_width = vte_terminal_get_char_width(vte);
-	geo_hints.base_height = vte_terminal_get_char_height(vte);
-	geo_hints.min_width = vte_terminal_get_char_width(vte);
-	geo_hints.min_height = vte_terminal_get_char_height(vte);
-	geo_hints.width_inc = vte_terminal_get_char_width(vte);
-	geo_hints.height_inc = vte_terminal_get_char_height(vte);
+	set_geometry_hints(vte, &geo_hints);
 	gtk_window_set_geometry_hints(GTK_WINDOW(window), vte_widget,
-	    &geo_hints, GDK_HINT_RESIZE_INC | GDK_HINT_MIN_SIZE
-	    | GDK_HINT_BASE_SIZE);
+	    &geo_hints,
+	    GDK_HINT_RESIZE_INC | GDK_HINT_MIN_SIZE | GDK_HINT_BASE_SIZE);
 
 	vte_config(vte);
 	vte_spawn(vte, directory, command, NULL);
