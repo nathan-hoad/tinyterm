@@ -1,4 +1,4 @@
-V=1.1.0
+V=1.1.1
 
 ifneq "$(VDEVEL)" ""
 V=$(VDEVEL)

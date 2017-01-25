@@ -34,7 +34,7 @@ The font can be configured in the "Font" section with the "font" option. Set it
 to your favorite monospaced font: `font=Source Code Pro 11`
 
 Colors are configured in the "Colors" section. There are the "foreground" and
-"background" options as well as the options "color00" through "color03". Set
+"background" options as well as the options "color00" through "color0f". Set
 these to the hexadecimal colors for your colorscheme. For solarized, use the
 following options:
 
@@ -57,3 +57,8 @@ following options:
 	color0d=#6c71c4
 	color0e=#93a1a1
 	color0f=#3d36e3
+
+### Vim
+For unknown reasons, vim does not color every line correctly. To fix this, add
+`set t_ut=` in your .vimrc. In addition to that, add `set termguicolors` to your
+.vimrc to add TrueColor support.
