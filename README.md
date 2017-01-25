@@ -1,16 +1,59 @@
-miniterm
-========
+# Miniterm
+Fork of https://github.com/nathan-hoad/tinyterm that adds functionality to act
+as a replacement for rxvt-unicode.
 
-Fork of https://github.com/nathan-hoad/tinyterm that adds functionality to act as a replacement for urxvt.
+## Synopsis
+Miniterm is a terminal emulator that uses vte as a backend to provide a
+minimalist interface. It features:
 
-- shortcuts for increasing/decreasing font size and copying/pasting
-- runs against vte3 for true color support
-- runs a single instance to save memory, like urxvtd/urxvtc
-- parses a config file at XDG\_CONFIG\_HOME/miniterm/
+- Shortcuts for increasing/decreasing font size and copying/pasting
+- Runs against vte3 for TrueColor support
+- Runs a single instance to save memory, like urxvtd/urxvtc
+- Parses a config file at XDG\_CONFIG\_HOME/miniterm/miniterm.conf
 
-Dependencies
-------------
+## Installation
+### Dependencies
+Miniterm requires the following dependencies:
 
 - glib2
 - gtk3
 - vte3 (2.91+)
+
+### Compilation
+To install, simply run `make` and `make install` which may require root
+permission.
+
+## Usage
+You can run Miniterm with the `miniterm` command.
+
+## Configuration
+Miniterm is configure with an ini-like file located in
+XDG\_CONFIG\_HOME/miniterm/miniterm.conf. Currently, there are two sections.
+
+The font can be configured in the "Font" section with the "font" option. Set it
+to your favorite monospaced font: `font=Source Code Pro 11`
+
+Colors are configured in the "Colors" section. There are the "foreground" and
+"background" options as well as the options "color00" through "color03". Set
+these to the hexadecimal colors for your colorscheme. For solarized, use the
+following options:
+
+	[Colors]
+	foreground=#657B83
+	background=#002B36
+	color00=#073642
+	color01=#DC322F
+	color02=#859900
+	color03=#b58900
+	color04=#268bd2
+	color05=#d33682
+	color06=#2aa198
+	color07=#eee8d5
+	color08=#002b36
+	color09=#cb4b16
+	color0a=#586e75
+	color0b=#657b83
+	color0c=#839496
+	color0d=#6c71c4
+	color0e=#93a1a1
+	color0f=#3d36e3

@@ -28,3 +28,4 @@ clean:
 
 install: miniterm
 	install -Dm755 miniterm $(DESTDIR)/usr/bin/miniterm
+	install -Dm755 miniterm.desktop $(DESTDIR)/usr/share/applications/miniterm.desktop
