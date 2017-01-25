@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Miniterm
+GenericName=Terminal
+Comment=A minimalist terminal emulator
+Exec=miniterm
+Terminal=false
+Type=Application
+Categories=System;TerminalEmulator;
+Keywords=shell;prompt;command;commandline;cmd;

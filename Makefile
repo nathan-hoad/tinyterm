@@ -1,5 +1,4 @@
-V=1
-VDEVEL=$(shell test -d .git && git describe 2>/dev/null)
+V=1.1.0
 
 ifneq "$(VDEVEL)" ""
 V=$(VDEVEL)
@@ -28,3 +27,4 @@ clean:
 
 install: miniterm
 	install -Dm755 miniterm $(DESTDIR)/usr/bin/miniterm
+	install -Dm755 miniterm.desktop $(DESTDIR)/usr/share/applications/miniterm.desktop
