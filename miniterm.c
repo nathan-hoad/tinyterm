@@ -48,7 +48,7 @@ static gboolean key_press_cb(VteTerminal* vte, GdkEventKey* event);
 static void vte_config(VteTerminal* vte);
 static void vte_spawn(VteTerminal* vte, char* working_directory, char* command,
     char** environment);
-static gboolean read_config_file(VteTerminal* vte, const char* config_path);
+static void read_config_file(VteTerminal* vte, GKeyFile* config_file);
 static void window_close(GtkWindow* window, gint status, gpointer user_data);
 static void vte_exit_cb(VteTerminal* vte, gint status, gpointer user_data);
 static void parse_arguments(int argc, char* argv[], char** command,
@@ -61,6 +61,8 @@ static void command_line(GApplication *app,
 static GtkWidget* create_vte_terminal(GtkWindow* window, gboolean keep,
     const char* title);
 static void set_geometry_hints(VteTerminal* vte, GdkGeometry* hints);
+static void set_colors_from_key_file(VteTerminal* vte,
+    GKeyFile* config_file);
 
 /* The application is global for use with signal handlers. */
 static GApplication *_application = NULL;
@@ -142,31 +144,29 @@ key_press_cb(VteTerminal* vte, GdkEventKey* event)
 	return TRUE;
 }
 
-/*
- * Reads the config file into the terminal.
- *
- * Returns true on success, false on failure.
- */
-static gboolean
-read_config_file(VteTerminal* vte, const char* config_path)
+static void
+set_colors_from_key_file(VteTerminal* vte, GKeyFile* config_file)
 {
-	GKeyFile* config_file = g_key_file_new();
-	if (!g_key_file_load_from_file(config_file, config_path, 0, NULL))
-		return FALSE;
-	PangoFontDescription* font = pango_font_description_from_string(
-	    g_key_file_get_string(config_file, "Font", "font", NULL));
-	if (font == NULL)
-		return FALSE;
-	vte_terminal_set_font(vte, font);
-	pango_font_description_free(font);
-
 	GdkRGBA color_fg, color_bg;
-	if (!gdk_rgba_parse(&color_fg, g_key_file_get_string(config_file,
-		    "Colors", "foreground", NULL)))
-		return FALSE;
-	if (!gdk_rgba_parse(&color_bg, g_key_file_get_string(config_file,
-		"Colors", "background", NULL)))
-		return FALSE;
+	char* fg_string = g_key_file_get_string(config_file, "Colors",
+	    "foreground", NULL);
+	if (!fg_string)
+		return;
+	if (!gdk_rgba_parse(&color_fg, fg_string)) {
+		g_free(fg_string);
+		return;
+	}
+	char* bg_string = g_key_file_get_string(config_file, "Colors",
+	    "background", NULL);
+	if (!bg_string) {
+		g_free(fg_string);
+		return;
+	}
+	if (!gdk_rgba_parse(&color_bg, bg_string)) {
+		g_free(fg_string);
+		g_free(bg_string);
+		return;
+	}
 
 	GdkRGBA color_palette[16];
 	for (int i = 0; i < 16; ++i) {
@@ -174,11 +174,31 @@ read_config_file(VteTerminal* vte, const char* config_path)
 		snprintf(key, sizeof(key), "color%02x", i);
 		if (!gdk_rgba_parse(&color_palette[i],
 			g_key_file_get_string(config_file, "Colors", key,
-			    NULL)))
-			return FALSE;
+			    NULL))) {
+			g_free(fg_string);
+			g_free(bg_string);
+			return;
+		}
 	}
 	vte_terminal_set_colors(vte, &color_fg, &color_bg, color_palette, 16);
-	return TRUE;
+	g_free(fg_string);
+	g_free(bg_string);
+}
+
+/* Reads the config file into the terminal. */
+static void
+read_config_file(VteTerminal* vte, GKeyFile* config_file)
+{
+	char* font_string = g_key_file_get_string(config_file, "Font", "font",
+	    NULL);
+	if (font_string != NULL) {
+		PangoFontDescription* font = pango_font_description_from_string(
+		    g_key_file_get_string(config_file, "Font", "font", NULL));
+		vte_terminal_set_font(vte, font);
+		pango_font_description_free(font);
+		g_free(font_string);
+	}
+	set_colors_from_key_file(vte, config_file);
 }
 
 static void
@@ -200,9 +220,9 @@ vte_config(VteTerminal* vte)
 	char* config_path = g_strconcat(config_dir, "/miniterm.conf", NULL);
 
 	GKeyFile* config_file = g_key_file_new();
-	if (g_key_file_load_from_file(config_file, config_path, 0, NULL)) {
-		read_config_file(vte, config_path);
-	} else {
+	if (g_key_file_load_from_file(config_file, config_path, 0, NULL))
+		read_config_file(vte, config_file);
+	else {
 		mkdir(config_dir, 0777);
 		FILE* file = fopen(config_path, "w");
 		if (file) {
