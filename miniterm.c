@@ -177,13 +177,21 @@ set_colors_from_key_file(VteTerminal* vte, GKeyFile* config_file)
 	for (int i = 0; i < 16; ++i) {
 		char key[8];
 		snprintf(key, sizeof(key), "color%02x", i);
-		if (!gdk_rgba_parse(&color_palette[i],
-			g_key_file_get_string(config_file, "Colors", key,
-			    NULL))) {
+		char *cl_string = g_key_file_get_string(config_file, "Colors", key,
+				NULL);
+		if (!cl_string) {
 			g_free(fg_string);
 			g_free(bg_string);
+			g_free(cl_string);
 			return;
 		}
+		if (!gdk_rgba_parse(&color_palette[i], cl_string)) {
+			g_free(fg_string);
+			g_free(bg_string);
+			g_free(cl_string);
+			return;
+		}
+		g_free(cl_string);
 	}
 	vte_terminal_set_colors(vte, &color_fg, &color_bg, color_palette, 16);
 	g_free(fg_string);
@@ -329,7 +337,7 @@ parse_arguments(int argc, char* argv[], char** command, char** directory,
 		{"execute",   'e', 0, G_OPTION_ARG_STRING,  command,    "Execute command instead of default shell.", "COMMAND"},
 		{"directory", 'd', 0, G_OPTION_ARG_STRING,  directory,  "Sets the working directory for the shell (or the command specified via -e).", "PATH"},
 		{"keep",      'k', 0, G_OPTION_ARG_NONE,    keep,       "Don't exit the terminal after child process exits.", 0},
-		{"title",     't', 0, G_OPTION_ARG_STRING,  title,      "Set value of WM_NAME property; disables window_title_cb (default: 'TinyTerm')", "TITLE"},
+		{"title",     't', 0, G_OPTION_ARG_STRING,  title,      "Set value of WM_NAME property; disables window_title_cb (default: 'MiniTerm')", "TITLE"},
 		{ NULL }
 	};
 
@@ -347,7 +355,7 @@ parse_arguments(int argc, char* argv[], char** command, char** directory,
 	}
 
 	if (version) {
-		g_print("tinyterm " MINITERM_VERSION "\n");
+		g_print("miniterm " MINITERM_VERSION "\n");
 		exit(EXIT_SUCCESS);
 	}
 }
@@ -419,7 +427,7 @@ new_window(GtkApplication* app, gchar** argv, gint argc)
 	window = gtk_application_window_new(GTK_APPLICATION(app));
 	g_signal_connect(window, "delete-event", G_CALLBACK(window_close), app);
 
-	gtk_window_set_title(GTK_WINDOW(window), title ? title : "TinyTerm");
+	gtk_window_set_title(GTK_WINDOW(window), title ? title : "MiniTerm");
 
 	/* Set window icon supplied by an icon theme. */
 	icon_theme = gtk_icon_theme_get_default();
@@ -491,7 +499,7 @@ main (int argc, char* argv[])
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
 
-	GtkApplication* app = gtk_application_new("us.laelath.tinyterm",
+	GtkApplication* app = gtk_application_new("us.laelath.miniterm",
 	    G_APPLICATION_HANDLES_COMMAND_LINE);
 	_application = G_APPLICATION(app);
 	g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
