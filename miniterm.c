@@ -94,6 +94,7 @@ window_title_cb(VteTerminal* vte)
 	    vte_terminal_get_window_title(vte));
 }
 
+/* Increases the font size of the terminal. */
 static void
 increase_font_size(VteTerminal* vte)
 {
@@ -106,7 +107,7 @@ increase_font_size(VteTerminal* vte)
 	pango_font_description_free(font);
 }
 
-/* Decrease the font size of vte. */
+/* Decreases the font size of the terminal. */
 static void
 decrease_font_size(VteTerminal* vte)
 {
@@ -144,6 +145,10 @@ key_press_cb(VteTerminal* vte, GdkEventKey* event)
 	return TRUE;
 }
 
+/*
+ * Uses config_file to load colors. Only sets the colors of the terminal if all
+ * are loaded corretly.
+ */
 static void
 set_colors_from_key_file(VteTerminal* vte, GKeyFile* config_file)
 {
@@ -301,7 +306,6 @@ window_close(GtkWindow* window, gint status, gpointer user_data)
 		windows = windows->next;
 		++count;
 	}
-
 	if (count == 1)
 		g_application_quit(G_APPLICATION(app));
 }
