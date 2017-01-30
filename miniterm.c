@@ -46,16 +46,16 @@ static void increase_font_size(VteTerminal *vte);
 static void decrease_font_size(VteTerminal *vte);
 static gboolean key_press_cb(VteTerminal *vte, GdkEventKey *event);
 static void vte_config(VteTerminal *vte);
-static void vte_spawn(VteTerminal *vte, char *working_directory, char *command,
+static gboolean vte_spawn(VteTerminal *vte, GApplicationCommandLine *command_line, char *working_directory, char *command,
     char **environment);
 static void read_config_file(VteTerminal *vte, GKeyFile *config_file);
 static void window_close(GtkWindow *window, gint status, gpointer user_data);
 static void vte_exit_cb(VteTerminal *vte, gint status, gpointer user_data);
-static void parse_arguments(int argc, char *argv[], char **command,
+static gboolean parse_arguments(GApplicationCommandLine *command_line, int argc, char *argv[], char **command,
     char **directory, gboolean *keep, char **title);
 static void signal_handler(int signal);
-static void new_window(GtkApplication *app, gchar **argv, gint argc);
-static void activate(GApplication *app, gpointer user_data);
+static void new_window(GtkApplication *app, GApplicationCommandLine *command_line, gchar **argv, gint argc);
+//static void activate(GApplication *app, gpointer user_data);
 static void command_line(GApplication *app,
     GApplicationCommandLine *command_line, gpointer user_data);
 static GtkWidget *create_vte_terminal(GtkWindow *window, gboolean keep,
@@ -216,11 +216,11 @@ read_config_file(VteTerminal *vte, GKeyFile *config_file)
 static void
 vte_config(VteTerminal *vte)
 {
-	VteRegex *regex = vte_regex_new_for_search(url_regex,
-	    strlen(url_regex), 0, NULL);
+	//VteRegex *regex = vte_regex_new_for_search(url_regex,
+	//    strlen(url_regex), 0, NULL);
 
-	vte_terminal_search_set_regex(vte, regex, 0);
-	vte_terminal_search_set_wrap_around(vte, SEARCH_WRAP_AROUND);
+	//vte_terminal_search_set_regex(vte, regex, 0);
+	//vte_terminal_search_set_wrap_around(vte, SEARCH_WRAP_AROUND);
 	vte_terminal_set_audible_bell(vte, AUDIBLE_BELL);
 	vte_terminal_set_cursor_shape(vte, CURSOR_SHAPE);
 	vte_terminal_set_cursor_blink_mode(vte, CURSOR_BLINK);
@@ -252,8 +252,8 @@ vte_config(VteTerminal *vte)
 	g_key_file_free(config_file);
 }
 
-static void
-vte_spawn(VteTerminal *vte, char *working_directory, char *command,
+static gboolean
+vte_spawn(VteTerminal *vte, GApplicationCommandLine *command_line, char *working_directory, char *command,
     char **environment)
 {
 	GError *error = NULL;
@@ -264,18 +264,22 @@ vte_spawn(VteTerminal *vte, char *working_directory, char *command,
 		command = vte_get_user_shell();
 	g_shell_parse_argv(command, NULL, &command_argv, &error);
 	if (error) {
-		g_printerr("Failed to parse command: %s\n", error->message);
+		g_application_command_line_printerr(command_line, "Failed to parse command: %s\n", error->message);
 		g_error_free(error);
-		exit(EXIT_FAILURE);
+		g_application_command_line_set_exit_status(command_line, EXIT_FAILURE);
+		//exit(EXIT_FAILURE);
+		return FALSE;
 	}
 
 	/* Create pty object */
 	VtePty *pty = vte_terminal_pty_new_sync(vte, VTE_PTY_NO_HELPER, NULL,
 	    &error);
 	if (error) {
-		g_printerr("Failed to create pty: %s\n", error->message);
+		g_application_command_line_printerr(command_line, "Failed to create pty: %s\n", error->message);
 		g_error_free(error);
-		exit(EXIT_FAILURE);
+		g_application_command_line_set_exit_status(command_line, EXIT_FAILURE);
+		//exit(EXIT_FAILURE);
+		return FALSE;
 	}
 	vte_terminal_set_pty(vte, pty);
 
@@ -289,12 +293,15 @@ vte_spawn(VteTerminal *vte, char *working_directory, char *command,
 			&child_pid,   // a location to store the child PID
 			&error);      // return location for a GError
 	if (error) {
-		g_printerr("%s\n", error->message);
+		g_application_command_line_printerr(command_line, "%s\n", error->message);
 		g_error_free(error);
-		exit(EXIT_FAILURE);
+		g_application_command_line_set_exit_status(command_line, EXIT_FAILURE);
+		//exit(EXIT_FAILURE);
+		return FALSE;
 	}
 	vte_terminal_watch_child(vte, child_pid);
 	g_strfreev(command_argv);
+	return TRUE;
 }
 
 /* Callback to exit TinyTerm with exit status of child process. */
@@ -326,37 +333,52 @@ vte_exit_cb(VteTerminal *vte, gint status, gpointer user_data)
 	gtk_window_close(GTK_WINDOW(user_data));
 }
 
-static void
-parse_arguments(int argc, char *argv[], char **command, char **directory,
+static gboolean
+parse_arguments(GApplicationCommandLine *command_line, int argc, char *argv[], char **command, char **directory,
     gboolean *keep, char **title)
 {
 	gboolean version = FALSE; /* Show version? */
+	gboolean help = FALSE;
 	const GOptionEntry entries[] = {
 		{"version",   'v', 0, G_OPTION_ARG_NONE,    &version,   "Display program version and exit.", 0},
 		{"execute",   'e', 0, G_OPTION_ARG_STRING,  command,    "Execute command instead of default shell.", "COMMAND"},
 		{"directory", 'd', 0, G_OPTION_ARG_STRING,  directory,  "Sets the working directory for the shell (or the command specified via -e).", "PATH"},
 		{"keep",      'k', 0, G_OPTION_ARG_NONE,    keep,       "Don't exit the terminal after child process exits.", 0},
 		{"title",     't', 0, G_OPTION_ARG_STRING,  title,      "Set value of WM_NAME property; disables window_title_cb (default: 'MiniTerm')", "TITLE"},
+		{"help",      'h', 0, G_OPTION_ARG_NONE,    &help,      "Display this message", 0},
 		{ NULL }
 	};
 
 	GError *error = NULL;
 	GOptionContext *context = g_option_context_new(NULL);
-	g_option_context_set_help_enabled(context, TRUE);
+	g_option_context_set_help_enabled(context, FALSE);
 	g_option_context_add_main_entries(context, entries, NULL);
 	g_option_context_parse(context, &argc, &argv, &error);
+
+	if (help) {
+    		char *help_text = g_option_context_get_help(context, TRUE, NULL);
+    		g_application_command_line_print(command_line, help_text);
+    		g_free(help_text);
+    		g_option_context_free(context);
+    		return FALSE;
+	}
+
 	g_option_context_free(context);
 
 	if (error) {
-		g_printerr("option parsing failed: %s\n", error->message);
+		g_application_command_line_printerr(command_line, "option parsing failed: %s\n", error->message);
 		g_error_free(error);
-		exit(EXIT_FAILURE);
+		g_application_command_line_set_exit_status(command_line, EXIT_FAILURE);
+		return FALSE;
+		//exit(EXIT_FAILURE);
 	}
 
 	if (version) {
-		g_print("miniterm " MINITERM_VERSION "\n");
-		exit(EXIT_SUCCESS);
+		g_application_command_line_print(command_line, "miniterm " MINITERM_VERSION "\n");
+		return FALSE;
+		//exit(EXIT_SUCCESS);
 	}
+	return TRUE;
 }
 
 static void
@@ -405,7 +427,7 @@ set_geometry_hints(VteTerminal *vte, GdkGeometry *hints)
 }
 
 static void
-new_window(GtkApplication *app, gchar **argv, gint argc)
+new_window(GtkApplication *app, GApplicationCommandLine *command_line, gchar **argv, gint argc)
 {
 	GtkWidget *window;
 	GtkWidget *box;
@@ -420,7 +442,9 @@ new_window(GtkApplication *app, gchar **argv, gint argc)
 	gboolean keep = FALSE;
 	char *title = NULL;
 
-	parse_arguments(argc, argv, &command, &directory, &keep, &title);
+	if (!parse_arguments(command_line, argc, argv, &command, &directory, &keep, &title)) {
+    		return;
+	}
 
 	/* Create window. */
 	window = gtk_application_window_new(GTK_APPLICATION(app));
@@ -435,6 +459,8 @@ new_window(GtkApplication *app, gchar **argv, gint argc)
 		g_error_free(error);
 	if (icon)
 		gtk_window_set_icon(GTK_WINDOW (window), icon);
+
+	g_object_unref(icon);
 
 	/* Create main box. */
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -454,7 +480,13 @@ new_window(GtkApplication *app, gchar **argv, gint argc)
 	    GDK_HINT_RESIZE_INC | GDK_HINT_MIN_SIZE | GDK_HINT_BASE_SIZE);
 
 	vte_config(vte);
-	vte_spawn(vte, directory, command, NULL);
+	if (!vte_spawn(vte, command_line, directory, command, NULL)) {
+    		gtk_window_close(GTK_WINDOW(window));
+		g_free(command);
+		g_free(directory);
+		g_free(title);
+    		return;
+	}
 
 	/* Cleanup. */
 	g_free(command);
@@ -465,6 +497,7 @@ new_window(GtkApplication *app, gchar **argv, gint argc)
 	gtk_widget_show_all(window);
 }
 
+/*
 static void
 activate(GApplication *app, gpointer user_data)
 {
@@ -472,6 +505,7 @@ activate(GApplication *app, gpointer user_data)
 
 	new_window(GTK_APPLICATION(app), NULL, 0);
 }
+*/
 
 static void
 command_line(GApplication *app, GApplicationCommandLine *command_line,
@@ -482,7 +516,8 @@ command_line(GApplication *app, GApplicationCommandLine *command_line,
 	gchar **argc;
 	gint argv;
 	argc = g_application_command_line_get_arguments(command_line, &argv);
-	new_window(GTK_APPLICATION(app), argc, argv);
+	g_application_command_line_set_exit_status(command_line, EXIT_SUCCESS);
+	new_window(GTK_APPLICATION(app), command_line, argc, argv);
 }
 
 /*
@@ -501,7 +536,7 @@ main (int argc, char *argv[])
 	GtkApplication *app = gtk_application_new("us.laelath.miniterm",
 	    G_APPLICATION_HANDLES_COMMAND_LINE);
 	_application = G_APPLICATION(app);
-	g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
+	//g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
 	g_signal_connect(app, "command-line", G_CALLBACK(command_line), NULL);
 	int status = g_application_run(G_APPLICATION(app), argc, argv);
 	g_object_unref(app);
