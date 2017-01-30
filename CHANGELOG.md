@@ -1,6 +1,12 @@
 # Change Log
 This project adheres to Semantic Versioning
 
+## [1.1.2]
+### Fixed
+- Fixed errors parsing command line arguments crashing all terminals
+- Fixed opening help and version closing all terminals
+- Fixed version and help not using the right output
+
 ## [1.1.1] - 2017-01-25
 ### Fixed
 - Fixe error in README.
