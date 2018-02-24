@@ -44,6 +44,7 @@ static gboolean window_focus_cb(GtkWindow *window);
 static void window_title_cb(VteTerminal *vte);
 static void increase_font_size(VteTerminal *vte);
 static void decrease_font_size(VteTerminal *vte);
+static void reset_font_size(VteTerminal *vte);
 static gboolean key_press_cb(VteTerminal *vte, GdkEventKey *event);
 static void vte_config(VteTerminal *vte);
 static gboolean vte_spawn(VteTerminal *vte, GApplicationCommandLine *command_line, char *working_directory, char *command,
@@ -66,6 +67,7 @@ static void set_colors_from_key_file(VteTerminal *vte,
 
 /* The application is global for use with signal handlers. */
 static GApplication *_application = NULL;
+static gint default_font_size;
 
 /* Callback to set window urgency hint on beep events. */
 static void
@@ -122,27 +124,52 @@ decrease_font_size(VteTerminal *vte)
 	pango_font_description_free(font);
 }
 
+/* Resets the font size of the terminal. */
+static void
+reset_font_size(VteTerminal *vte)
+{
+	PangoFontDescription *font =
+	    pango_font_description_copy_static(vte_terminal_get_font(vte));
+	pango_font_description_set_size(font, default_font_size);
+	vte_terminal_set_font(vte, font);
+	pango_font_description_free(font);
+}
+
 /* Callback to react to key press events. */
 static gboolean
 key_press_cb(VteTerminal *vte, GdkEventKey *event)
 {
-	if ((event->state & (MODIFIER)) != (MODIFIER))
-		return FALSE;
-	switch (gdk_keyval_to_upper(event->keyval)) {
-	case GDK_KEY_C:
-		vte_terminal_copy_clipboard(vte);
-		break;
-	case GDK_KEY_V:
-		vte_terminal_paste_clipboard(vte);
-		return TRUE;
-	case GDK_KEY_equal:
-		increase_font_size(vte);
-		break;
-	case GDK_KEY_minus:
-		decrease_font_size(vte);
-		break;
+	const guint key = gdk_keyval_to_lower(event->keyval);
+	const guint modifiers = event->state & gtk_accelerator_get_default_mod_mask();
+
+	if ((modifiers == (GDK_CONTROL_MASK | GDK_SHIFT_MASK))) {
+		switch (key) {
+		case GDK_KEY_c:
+#if VTE_CHECK_VERSION(0, 50, 0)
+			vte_terminal_copy_clipboard_format(vte, VTE_FORMAT_TEXT);
+#else
+			vte_terminal_copy_clipboard(vte);
+#endif
+			return TRUE;
+		case GDK_KEY_v:
+			vte_terminal_paste_clipboard(vte);
+			return TRUE;
+		case GDK_KEY_plus:
+			increase_font_size(vte);
+			return TRUE;
+		}
+	} else if (modifiers == GDK_CONTROL_MASK) {
+		switch (key) {
+		case GDK_KEY_minus:
+			decrease_font_size(vte);
+			return TRUE;
+		case GDK_KEY_equal:
+			reset_font_size(vte);
+			return TRUE;
+		}
 	}
-	return TRUE;
+
+	return FALSE;
 }
 
 /*
@@ -207,6 +234,8 @@ read_config_file(VteTerminal *vte, GKeyFile *config_file)
 		PangoFontDescription *font = pango_font_description_from_string(
 		    g_key_file_get_string(config_file, "Font", "font", NULL));
 		vte_terminal_set_font(vte, font);
+		default_font_size = pango_font_description_get_size(font);
+		if (default_font_size == 0) default_font_size = 12 * PANGO_SCALE;
 		pango_font_description_free(font);
 		g_free(font_string);
 	}
