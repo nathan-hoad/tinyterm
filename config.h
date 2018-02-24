@@ -45,9 +45,6 @@
 /* Selection behavior for double-clicks */
 #define WORD_CHARS "-A-Za-z0-9:./?%&#_=+@~"
 
-/* Keyboard shortcuts */
-#define MODIFIER (GDK_CONTROL_MASK | GDK_MOD1_MASK)
-
 /* Regular expression matching urls */
 #define SPECIAL_CHARS   "[[:alnum:]\\Q+-_,?;.:/!%$^*&~#=()\\E]"
 #define SCHEME          "(?:[[:alpha:]][+-.[:alpha:]]*://)"

@@ -126,23 +126,31 @@ decrease_font_size(VteTerminal *vte)
 static gboolean
 key_press_cb(VteTerminal *vte, GdkEventKey *event)
 {
-	if ((event->state & (MODIFIER)) != (MODIFIER))
-		return FALSE;
-	switch (gdk_keyval_to_upper(event->keyval)) {
-	case GDK_KEY_C:
-		vte_terminal_copy_clipboard(vte);
-		break;
-	case GDK_KEY_V:
-		vte_terminal_paste_clipboard(vte);
-		return TRUE;
-	case GDK_KEY_equal:
-		increase_font_size(vte);
-		break;
-	case GDK_KEY_minus:
+	const guint key = gdk_keyval_to_lower(event->keyval);
+	const guint modifiers = event->state & gtk_accelerator_get_default_mod_mask();
+
+	if ((modifiers == (GDK_CONTROL_MASK | GDK_SHIFT_MASK))) {
+		switch (key) {
+		case GDK_KEY_c:
+#if VTE_CHECK_VERSION(0, 50, 0)
+			vte_terminal_copy_clipboard_format(vte, VTE_FORMAT_TEXT);
+#else
+			vte_terminal_copy_clipboard(vte);
+#endif
+			return TRUE;
+		case GDK_KEY_v:
+			vte_terminal_paste_clipboard(vte);
+			return TRUE;
+		case GDK_KEY_plus:
+			increase_font_size(vte);
+			return TRUE;
+		}
+	} else if (modifiers == GDK_CONTROL_MASK && key == GDK_KEY_minus) {
 		decrease_font_size(vte);
-		break;
+		return TRUE;
 	}
-	return TRUE;
+
+	return FALSE;
 }
 
 /*
