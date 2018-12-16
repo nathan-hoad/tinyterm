@@ -480,7 +480,22 @@ new_window(GtkApplication *app, GApplicationCommandLine *command_line,
 	/* Create vte terminal widget */
 	GtkWidget *vte_widget = create_vte_terminal(GTK_WINDOW(window), keep,
 	    title);
-	gtk_box_pack_start(GTK_BOX(box), vte_widget, TRUE, TRUE, 0);
+	if (USE_SCROLLBAR) {
+		GtkAdjustment *hadjustment = gtk_scrollable_get_hadjustment(
+		    GTK_SCROLLABLE(vte_widget));
+		GtkAdjustment *vadjustment = gtk_scrollable_get_vadjustment(
+		    GTK_SCROLLABLE(vte_widget));
+		GtkWidget *scrolled_window = gtk_scrolled_window_new(
+		    hadjustment, vadjustment);
+		gtk_scrolled_window_set_overlay_scrolling(
+		    GTK_SCROLLED_WINDOW(scrolled_window), FALSE);
+		gtk_scrolled_window_set_policy(
+		    GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC,
+		    GTK_POLICY_AUTOMATIC);
+		gtk_container_add(GTK_CONTAINER(scrolled_window), vte_widget);
+		gtk_box_pack_start(GTK_BOX(box), scrolled_window, TRUE, TRUE, 0);
+	} else
+		gtk_box_pack_start(GTK_BOX(box), vte_widget, TRUE, TRUE, 0);
 	VteTerminal *vte = VTE_TERMINAL(vte_widget);
 	/* Apply geometry hints to handle terminal resizing */
 	set_geometry_hints(vte, &geo_hints);
