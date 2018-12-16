@@ -59,7 +59,7 @@ following options:
 	color0e=#93a1a1
 	color0f=#3d36e3
 
-## Scrollbar
+### Scrollbar
 If you desire a scrollbar, compile with `USE_SCROLLBAR` set to `TRUE` in `config.h`.
 
 ### Vim
